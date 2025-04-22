@@ -1,0 +1,8 @@
+# Ignore Aider directory and its caches
+.aider*
+
+# Ignore build directory
+build/
+
+# Ignore JetBrains IDE directory
+.idea/
