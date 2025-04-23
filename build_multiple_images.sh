@@ -15,9 +15,8 @@ ROOTFS_TYPE="btrfs"
 BTRFS_COMPRESSION="zstd"
 DESKTOP_APPGROUPS_SELECTED="browsers,desktop_tools,editors,email,office" # Used only for desktop builds
 DESKTOP_ENVIRONMENT_CONFIG_NAME="config_base" # Used only for desktop builds
-ENABLE_EXTENSIONS="mesa-vpu"
-COMPRESS_OUTPUTIMAGE="xz"
-IMAGE_XZ_COMPRESSION_RATIO="6"
+COMPRESS_OUTPUTIMAGE="sha,zstd"
+IMAGE_ZSTD_COMPRESSION_RATIO=12
 INSTALL_HEADERS="yes"
 KERNEL_CONFIGURE="no"
 BUILD_MINIMAL="no"
@@ -70,48 +69,88 @@ ensure_build_dir() {
     log_msg "--- Changed directory to build/ ---"
 }
 
-copy_custom_config() {
-    log_msg "Copying custom rockchip-rk3588.conf..."
-    # Source path is relative to the SCRIPT_DIR (one level up from current 'build' dir)
-    SOURCE_CONF="../rockchip-rk3588.conf"
-    # Destination path is relative to the current 'build' dir
-    DEST_CONF="config/sources/families/rockchip-rk3588.conf"
+# --- Helper function to copy a single file with directory creation and error handling ---
+_copy_single_file() {
+    local source_path="$1"
+    local dest_path="$2"
+    local dest_dir
 
-    if [ -f "$SOURCE_CONF" ]; then
-        log_msg "--- Found custom configuration: $SOURCE_CONF ---"
-        log_msg "--- Copying to: $DEST_CONF ---"
-        if cp -vf "$SOURCE_CONF" "$DEST_CONF"; then
-            log_msg "--- Custom configuration copied successfully. ---"
-        else
-            # Attempt to create the destination directory if it doesn't exist
-            DEST_DIR=$(dirname "$DEST_CONF")
-            if [ ! -d "$DEST_DIR" ]; then
-                log_msg "--- Destination directory $DEST_DIR does not exist. Attempting to create it. ---"
-                if mkdir -p "$DEST_DIR"; then
-                    log_msg "--- Destination directory created. Retrying copy. ---"
-                    if cp -vf "$SOURCE_CONF" "$DEST_CONF"; then
-                        log_msg "--- Custom configuration copied successfully after creating directory. ---"
-                    else
-                        log_msg "### ERROR: Failed to copy custom configuration even after creating directory. Check permissions. Exiting. ###"
-                        exit 1
-                    fi
+    # Check if source file exists
+    if [ ! -f "$source_path" ]; then
+        log_msg "### WARNING: Source file '$source_path' not found. Skipping copy. ###"
+        # Return 0 because a missing source might be acceptable (like the default conf)
+        return 0
+    fi
+
+    log_msg "--- Found custom file: $source_path ---"
+    log_msg "--- Attempting to copy to: $dest_path ---"
+
+    # Attempt initial copy
+    if cp -vf "$source_path" "$dest_path"; then
+        log_msg "--- File copied successfully. ---"
+        return 0
+    else
+        # If copy failed, check if destination directory exists
+        dest_dir=$(dirname "$dest_path")
+        if [ ! -d "$dest_dir" ]; then
+            log_msg "--- Destination directory '$dest_dir' does not exist. Attempting to create it. ---"
+            if mkdir -p "$dest_dir"; then
+                log_msg "--- Destination directory created. Retrying copy. ---"
+                if cp -vf "$source_path" "$dest_path"; then
+                    log_msg "--- File copied successfully after creating directory. ---"
+                    return 0
                 else
-                    log_msg "### ERROR: Failed to create destination directory $DEST_DIR. Check permissions. Exiting. ###"
-                    exit 1
+                    log_msg "### ERROR: Failed to copy file '$source_path' even after creating directory '$dest_dir'. Check permissions. ###"
+                    return 1 # Indicate failure
                 fi
             else
-                log_msg "### ERROR: Failed to copy custom configuration. Check permissions or paths. Exiting. ###"
-                exit 1
+                log_msg "### ERROR: Failed to create destination directory '$dest_dir'. Check permissions. ###"
+                return 1 # Indicate failure
             fi
+        else
+            # Directory exists, but initial copy failed
+            log_msg "### ERROR: Failed to copy file '$source_path' to '$dest_path'. Destination directory exists, check permissions or if destination is a directory itself. ###"
+            return 1 # Indicate failure
         fi
-    else
-        log_msg "### WARNING: Custom configuration file '$SOURCE_CONF' not found next to the script. ###"
-        log_msg "###          The default configuration from the build framework will be used.      ###"
-        # Decide if this should be a fatal error or just a warning.
-        # For now, it's just a warning, allowing the build to proceed with the default config.
-        # exit 1 # Uncomment this line if the custom config is mandatory for your builds.
     fi
 }
+
+copy_custom_config() {
+    log_msg "Copying custom configuration files..."
+
+    # Define file pairs: Source (relative to SCRIPT_DIR) -> Destination (relative to build/)
+    local source_conf_rk="../rockchip-rk3588.conf"
+    local dest_conf_rk="config/sources/families/rockchip-rk3588.conf"
+
+    local source_script_cs="../compress-checksum.sh"
+    local dest_script_cs="lib/functions/image/compress-checksum.sh"
+
+    # Copy rockchip-rk3588.conf
+    if ! _copy_single_file "$source_conf_rk" "$dest_conf_rk"; then
+        # If _copy_single_file returned 1 (error), and it wasn't just a missing source warning
+        if [ -f "$source_conf_rk" ]; then # Check if the source existed (meaning it was a real copy error)
+             log_msg "### FATAL: Error copying $source_conf_rk. Exiting. ###"
+             exit 1
+        fi
+        # If source didn't exist, the warning was already printed by the helper, continue.
+    fi
+
+    # Copy compress-checksum.sh
+    if ! _copy_single_file "$source_script_cs" "$dest_script_cs"; then
+        # If _copy_single_file returned 1 (error), and it wasn't just a missing source warning
+        if [ -f "$source_script_cs" ]; then # Check if the source existed
+             log_msg "### FATAL: Error copying $source_script_cs. Exiting. ###"
+             exit 1
+        fi
+        # If source didn't exist, the warning was already printed by the helper.
+        # Decide if a missing compress-checksum.sh is fatal. Assuming it IS required:
+        log_msg "### FATAL: Required custom script '$source_script_cs' not found. Exiting. ###"
+        exit 1
+    fi
+
+    log_msg "--- Custom configuration copy process finished. ---"
+}
+
 
 run_desktop_builds() {
     log_msg "#####################################################"
@@ -160,9 +199,8 @@ run_desktop_builds() {
             BTRFS_COMPRESSION="$BTRFS_COMPRESSION" \
             DESKTOP_APPGROUPS_SELECTED="$DESKTOP_APPGROUPS_SELECTED" \
             DESKTOP_ENVIRONMENT_CONFIG_NAME="$DESKTOP_ENVIRONMENT_CONFIG_NAME" \
-            ENABLE_EXTENSIONS="$ENABLE_EXTENSIONS" \
             COMPRESS_OUTPUTIMAGE="$COMPRESS_OUTPUTIMAGE" \
-            IMAGE_XZ_COMPRESSION_RATIO="$IMAGE_XZ_COMPRESSION_RATIO" \
+            IMAGE_ZSTD_COMPRESSION_RATIO="$IMAGE_ZSTD_COMPRESSION_RATIO" \
             INSTALL_HEADERS="$INSTALL_HEADERS" \
             KERNEL_CONFIGURE="$KERNEL_CONFIGURE" \
             BUILD_MINIMAL="$BUILD_MINIMAL" \
@@ -233,9 +271,8 @@ run_server_builds() {
           RELEASE="$release" \
           ROOTFS_TYPE="$ROOTFS_TYPE" \
           BTRFS_COMPRESSION="$BTRFS_COMPRESSION" \
-          ENABLE_EXTENSIONS="$ENABLE_EXTENSIONS" \
           COMPRESS_OUTPUTIMAGE="$COMPRESS_OUTPUTIMAGE" \
-          IMAGE_XZ_COMPRESSION_RATIO="$IMAGE_XZ_COMPRESSION_RATIO" \
+          IMAGE_ZSTD_COMPRESSION_RATIO="$IMAGE_ZSTD_COMPRESSION_RATIO" \
           INSTALL_HEADERS="$INSTALL_HEADERS" \
           KERNEL_CONFIGURE="$KERNEL_CONFIGURE" \
           BUILD_MINIMAL="$BUILD_MINIMAL" \
