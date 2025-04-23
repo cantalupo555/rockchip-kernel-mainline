@@ -330,8 +330,66 @@ main() {
     setup_environment
     ensure_build_dir
     copy_custom_config
-    run_desktop_builds
-    run_server_builds
+
+    # --- Interactive Menu ---
+    local build_choice
+    log_msg "Select the type of images to build:"
+    options=("Build Desktop images ONLY" "Build Server images ONLY" "Build BOTH Desktop and Server images" "Quit")
+    PS3='Please enter your choice (1-4): ' # Set the select prompt
+
+    select opt in "${options[@]}"
+    do
+        case $opt in
+            "Build Desktop images ONLY")
+                log_msg "--- Option selected: Building Desktop images only ---"
+                build_choice="desktop"
+                break # Exit the select loop
+                ;;
+            "Build Server images ONLY")
+                log_msg "--- Option selected: Building Server images only ---"
+                build_choice="server"
+                # If only server is selected, we need to ensure the cleanup logic
+                # works as if it were the first run (or based on the previous state,
+                # but without a desktop run immediately before).
+                # Resetting FIRST_RUN ensures no unnecessary extra cleaning
+                # assuming there was no prior build in this script execution.
+                # If the script were more complex (e.g., looping the menu), this logic would need to be more robust.
+                FIRST_RUN=true
+                prev_board=""
+                prev_release=""
+                build_choice="server"
+                break # Exit the select loop
+                ;;
+            "Build BOTH Desktop and Server images")
+                log_msg "--- Option selected: Building BOTH Desktop and Server images ---"
+                build_choice="both"
+                break # Exit the select loop
+                ;;
+            "Quit")
+                log_msg "--- Build process cancelled by user. Exiting. ---"
+                exit 0
+                ;;
+            *) # Case for invalid user input
+                log_msg "Invalid option '$REPLY'. Please select a number between 1 and ${#options[@]}."
+                # The select loop will continue automatically
+                ;;
+        esac
+    done
+    # --- End Interactive Menu ---
+
+    # --- Execute Builds Based on Choice ---
+    if [[ "$build_choice" == "desktop" || "$build_choice" == "both" ]]; then
+        run_desktop_builds
+    fi
+
+    if [[ "$build_choice" == "server" || "$build_choice" == "both" ]]; then
+        # If "server only" was chosen, FIRST_RUN and prev_ vars were already adjusted in the menu.
+        # If "both" was chosen, the prev_ variables will be set by run_desktop_builds.
+        run_server_builds
+    fi
+    # --- End Execute Builds ---
+
+
     print_summary
 
     # Decide the final exit code
@@ -339,8 +397,15 @@ main() {
       log_msg "Exiting with error code 1 due to build failures."
       exit 1 # Exit with error if any build failed
     else
-      log_msg "All builds completed successfully. Exiting with code 0."
-      exit 0 # Exit with success if all passed
+      # Check if any build was actually executed before declaring total success
+      if [[ "$build_choice" == "desktop" || "$build_choice" == "server" || "$build_choice" == "both" ]]; then
+          log_msg "All selected builds completed successfully. Exiting with code 0."
+          exit 0 # Exit with success if all selected passed
+      else
+          # Case where the user chose "Quit" or something unexpected happened
+          log_msg "No builds were executed or selected. Exiting."
+          exit 0 # Or maybe a different exit code if preferred
+      fi
     fi
 }
 
