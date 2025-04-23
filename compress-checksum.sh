@@ -69,9 +69,9 @@ function output_images_compress_and_checksum() {
 		elif [[ $COMPRESS_OUTPUTIMAGE == *zstd* ]]; then
 			# Check if zstd command exists
 			if command -v zstd &> /dev/null; then
-				display_alert "Compressing with zstd (long mode)" "${uncompressed_file_basename} -> ${uncompressed_file_basename}.zst" "info"
-				# Use zstd: -T0 for multi-threading, --rm to delete original, --long=30 for long range mode, level from variable.
-				if zstd -T0 --rm --long=30 "-${zstd_compression_ratio_image}" "${uncompressed_file}"; then
+				display_alert "Compressing with zstd" "${uncompressed_file_basename} -> ${uncompressed_file_basename}.zst" "info"
+				# Use zstd: -T0 for multi-threading, --rm to delete original, level from variable.
+				if zstd -T0 --rm "-${zstd_compression_ratio_image}" "${uncompressed_file}"; then
 					compression_type=".zst"
 					final_file_path="${uncompressed_file}${compression_type}"
 				else

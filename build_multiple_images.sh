@@ -7,7 +7,7 @@
 # Define the desired variations
 BOARDS=("orangepi5" "orangepi5-plus")
 RELEASES=("noble" "bookworm")
-DESKTOPS=("gnome" "xfce" "cinnamon") # Only for the desktop section
+DESKTOPS=("gnome") # Only for the desktop section
 
 # Fixed base parameters for all builds (unless overridden)
 BRANCH="mainline"
@@ -15,8 +15,9 @@ ROOTFS_TYPE="btrfs"
 BTRFS_COMPRESSION="zstd"
 DESKTOP_APPGROUPS_SELECTED="browsers,desktop_tools,editors,email,office" # Used only for desktop builds
 DESKTOP_ENVIRONMENT_CONFIG_NAME="config_base" # Used only for desktop builds
+ENABLE_EXTENSIONS="mesa-vpu"
 COMPRESS_OUTPUTIMAGE="sha,zstd"
-IMAGE_ZSTD_COMPRESSION_RATIO=12
+IMAGE_ZSTD_COMPRESSION_RATIO=9
 INSTALL_HEADERS="yes"
 KERNEL_CONFIGURE="no"
 BUILD_MINIMAL="no"
@@ -199,6 +200,7 @@ run_desktop_builds() {
             BTRFS_COMPRESSION="$BTRFS_COMPRESSION" \
             DESKTOP_APPGROUPS_SELECTED="$DESKTOP_APPGROUPS_SELECTED" \
             DESKTOP_ENVIRONMENT_CONFIG_NAME="$DESKTOP_ENVIRONMENT_CONFIG_NAME" \
+            ENABLE_EXTENSIONS="$ENABLE_EXTENSIONS" \
             COMPRESS_OUTPUTIMAGE="$COMPRESS_OUTPUTIMAGE" \
             IMAGE_ZSTD_COMPRESSION_RATIO="$IMAGE_ZSTD_COMPRESSION_RATIO" \
             INSTALL_HEADERS="$INSTALL_HEADERS" \
