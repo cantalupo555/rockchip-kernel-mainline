@@ -23,6 +23,7 @@ KERNEL_CONFIGURE="no"
 BUILD_MINIMAL="no"
 KERNEL_BTF="yes" # Forcing BTF=yes as requested
 EXPERT="yes"
+PROGRESS_LOG_TO_FILE="yes" # Enable progress logging to file
 
 # --- Global Variables ---
 SCRIPT_DIR=""
@@ -243,6 +244,7 @@ run_desktop_builds() {
             BUILD_MINIMAL="$BUILD_MINIMAL" \
             KERNEL_BTF="$KERNEL_BTF" \
             EXPERT="$EXPERT" \
+            PROGRESS_LOG_TO_FILE="$PROGRESS_LOG_TO_FILE" \
             $CLEAN_OPT # Add the determined cleaning option
 
           # Check the exit status
@@ -315,6 +317,7 @@ run_server_builds() {
           BUILD_MINIMAL="$BUILD_MINIMAL" \
           KERNEL_BTF="$KERNEL_BTF" \
           EXPERT="$EXPERT" \
+          PROGRESS_LOG_TO_FILE="$PROGRESS_LOG_TO_FILE" \
           $CLEAN_OPT # Add the determined cleaning option
 
         # Check the exit status

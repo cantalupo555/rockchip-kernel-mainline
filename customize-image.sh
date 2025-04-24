@@ -57,12 +57,12 @@ Main() {
             bookworm)
                 log_info "Targeting packages for installation in Bookworm Desktop..."
                 # Add packages to install specifically for Bookworm Desktop
-                PACKAGES_TO_INSTALL="firefox-esr libreoffice flatpak" # Add more separated by space if needed
+                PACKAGES_TO_INSTALL="firefox-esr libreoffice flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-clocks gnome-calendar" # Add more separated by space if needed
                 ;;
             noble)
                 log_info "Targeting packages for installation in Noble Desktop..."
                 # Add packages to install specifically for Noble Desktop
-                PACKAGES_TO_INSTALL="firefox libreoffice flatpak" # Add more separated by space if needed
+                PACKAGES_TO_INSTALL="firefox libreoffice flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-clocks gnome-calendar" # Add more separated by space if needed
                 ;;
             *)
                 # Default case for other releases not explicitly listed for Desktop
@@ -93,6 +93,26 @@ Main() {
             exit 1
         else
             log_info "Successfully installed packages for $RELEASE."
+
+            # --- Add Flathub remote specifically after installing flatpak packages ---
+            # Check if flatpak was installed and if we are on Noble Desktop
+            if [[ "$RELEASE" == "noble" && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *flatpak* ]]; then
+                log_info "Adding Flathub repository for Noble Desktop..."
+                # Ensure flatpak command is available before running
+                if command -v flatpak &> /dev/null; then
+                    if ! flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo; then
+                        log_warn "Failed to add Flathub repository. Flatpak apps may not be available in Software Center."
+                        # Decide if this is a critical error (exit 1) or just a warning. Let's warn for now.
+                        # exit 1
+                    else
+                        log_info "Flathub repository added successfully."
+                    fi
+                else
+                    log_warn "flatpak command not found after installation. Cannot add Flathub repository."
+                fi
+            fi
+            # --- End Flathub remote add ---
+
             # Unlike removal, autoremove is usually not needed immediately after install
         fi
     else
@@ -100,7 +120,6 @@ Main() {
         log_info "No specific packages marked for installation for this phase."
     fi
     # --- End Install Release-Specific Packages ---
-
 
     # --- Remove Release-Specific Unwanted Packages ---
     log_info "Checking for release-specific packages to remove..."
@@ -111,7 +130,7 @@ Main() {
         noble)
             log_info "Targeting packages for removal in Noble..."
             # List packages to remove specifically for Noble
-            PACKAGES_TO_REMOVE="synaptic xarchiver mc terminator"
+            PACKAGES_TO_REMOVE="synaptic xarchiver mc terminator gdebi"
             ;;
         bookworm)
             log_info "No specific packages targeted for removal in Bookworm."
