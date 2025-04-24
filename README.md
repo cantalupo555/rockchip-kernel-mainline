@@ -18,7 +18,7 @@ It utilizes the [official Armbian build framework](https://github.com/armbian/bu
 *   **Automation:** Executes multiple builds sequentially.
 *   **Flexible Configuration (in Script):** Allows defining Board, Release, and Desktop variations directly in the script variables.
 *   **Build Framework Management:** Automatically clones the `armbian/build` repository if it's not present locally in the `build/` directory.
-*   **Custom Configuration:** Automatically copies the `rockchip-rk3588.conf` file from this repository to the correct location within the Armbian framework, overwriting the default.
+*   **Custom Configuration & Customization:** Automatically copies custom configuration files (`rockchip-rk3588.conf`), image customization scripts (`customize-image.sh`), and post-processing scripts (`compress-checksum.sh`) from this repository to the correct locations within the Armbian framework, overwriting defaults where applicable.
 *   **Optimized Cleanup:** Intelligently performs cleanup (`CLEAN_LEVEL`) between builds to save time (cleans more when the board changes, less when only the release or desktop changes).
 *   **Reporting:** Records the success or failure of each individual build and presents a summary at the end.
 *   **Fault Tolerance:** Continues to the next build even if a specific one fails.
@@ -43,6 +43,8 @@ It utilizes the [official Armbian build framework](https://github.com/armbian/bu
     *   Modify the `BOARDS`, `RELEASES`, `DESKTOPS` arrays and other parameter variables (like `BRANCH`, `ROOTFS_TYPE`, etc.) at the beginning of the script to define the images you want to build.
 3.  **Adjust Board Configuration (Optional):**
     *   If necessary, edit the `rockchip-rk3588.conf` file to change specific kernel, U-Boot, or patch settings for the RK3588 family.
+*   **Adjust Image Customization (Optional):**
+    *   Edit the `customize-image.sh` script to add commands (like installing packages, copying files, modifying settings) that will run *inside* the image during the build process (within the chroot environment).
 
 ## Usage
 
@@ -62,8 +64,9 @@ It utilizes the [official Armbian build framework](https://github.com/armbian/bu
 
 The script will:
 *   Check for/clone the `build/` directory.
-*   Copy the `rockchip-rk3588.conf` configuration.
-*   Start the build loops for Desktop and then Server images.
+*   Copy custom configuration (`rockchip-rk3588.conf`), image customization (`customize-image.sh`), and post-processing (`compress-checksum.sh`) scripts into the `build/` directory structure.
+*   Present a menu to choose between building Desktop, Server, or both types of images.
+*   Start the selected build loops.
 *   Print logs and the final summary to the console (and log file, if using `tee`).
 
 ## Output

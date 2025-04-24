@@ -13,7 +13,7 @@ DESKTOPS=("gnome") # Only for the desktop section
 BRANCH="mainline"
 ROOTFS_TYPE="btrfs"
 BTRFS_COMPRESSION="zstd"
-DESKTOP_APPGROUPS_SELECTED="browsers,desktop_tools,editors,email,office" # Used only for desktop builds
+DESKTOP_APPGROUPS_SELECTED="" # Used only for desktop builds
 DESKTOP_ENVIRONMENT_CONFIG_NAME="config_base" # Used only for desktop builds
 ENABLE_EXTENSIONS="mesa-vpu"
 COMPRESS_OUTPUTIMAGE="sha,zstd"
@@ -70,38 +70,53 @@ ensure_build_dir() {
     log_msg "--- Changed directory to build/ ---"
 }
 
-# --- Helper function to copy a single file with directory creation and error handling ---
-_copy_single_file() {
+# --- Helper function to copy a single file or directory with directory creation and error handling ---
+_copy_item() {
     local source_path="$1"
     local dest_path="$2"
     local dest_dir
+    local cp_cmd=""
 
-    # Check if source file exists
-    if [ ! -f "$source_path" ]; then
-        log_msg "### WARNING: Source file '$source_path' not found. Skipping copy. ###"
+    # Check if source item exists
+    if [ ! -e "$source_path" ]; then
+        log_msg "### WARNING: Source item '$source_path' not found. Skipping copy. ###"
         # Return 0 because a missing source might be acceptable (like the default conf)
         return 0
     fi
 
-    log_msg "--- Found custom file: $source_path ---"
+    log_msg "--- Found custom item: $source_path ---"
     log_msg "--- Attempting to copy to: $dest_path ---"
 
+    # Determine the correct cp command
+    if [ -d "$source_path" ]; then
+        # Use -a (archive) to preserve attributes, -r (recursive), -f (force overwrite)
+        cp_cmd="cp -arf"
+        log_msg "--- Source is a directory, using '$cp_cmd' ---"
+    elif [ -f "$source_path" ]; then
+        # Use -v (verbose), -f (force overwrite)
+        cp_cmd="cp -vf"
+        log_msg "--- Source is a file, using '$cp_cmd' ---"
+    else
+        log_msg "### ERROR: Source '$source_path' exists but is not a regular file or directory. Skipping copy. ###"
+        return 1 # Indicate failure
+    fi
+
     # Attempt initial copy
-    if cp -vf "$source_path" "$dest_path"; then
-        log_msg "--- File copied successfully. ---"
+    if $cp_cmd "$source_path" "$dest_path"; then
+        log_msg "--- Item copied successfully. ---"
         return 0
     else
-        # If copy failed, check if destination directory exists
+        # If copy failed, check if destination directory's parent exists
         dest_dir=$(dirname "$dest_path")
         if [ ! -d "$dest_dir" ]; then
             log_msg "--- Destination directory '$dest_dir' does not exist. Attempting to create it. ---"
             if mkdir -p "$dest_dir"; then
                 log_msg "--- Destination directory created. Retrying copy. ---"
-                if cp -vf "$source_path" "$dest_path"; then
-                    log_msg "--- File copied successfully after creating directory. ---"
+                if $cp_cmd "$source_path" "$dest_path"; then
+                    log_msg "--- Item copied successfully after creating directory. ---"
                     return 0
                 else
-                    log_msg "### ERROR: Failed to copy file '$source_path' even after creating directory '$dest_dir'. Check permissions. ###"
+                    log_msg "### ERROR: Failed to copy item '$source_path' even after creating directory '$dest_dir'. Check permissions. ###"
                     return 1 # Indicate failure
                 fi
             else
@@ -110,25 +125,32 @@ _copy_single_file() {
             fi
         else
             # Directory exists, but initial copy failed
-            log_msg "### ERROR: Failed to copy file '$source_path' to '$dest_path'. Destination directory exists, check permissions or if destination is a directory itself. ###"
+            log_msg "### ERROR: Failed to copy item '$source_path' to '$dest_path'. Destination directory exists, check permissions or other issues. ###"
             return 1 # Indicate failure
         fi
     fi
 }
 
-copy_custom_config() {
-    log_msg "Copying custom configuration files..."
 
-    # Define file pairs: Source (relative to SCRIPT_DIR) -> Destination (relative to build/)
+copy_custom_config() {
+    log_msg "Copying custom configuration files and scripts..." # Message updated slightly
+
+    # Define item pairs: Source (relative to SCRIPT_DIR) -> Destination (relative to build/)
     local source_conf_rk="../rockchip-rk3588.conf"
     local dest_conf_rk="config/sources/families/rockchip-rk3588.conf"
 
     local source_script_cs="../compress-checksum.sh"
     local dest_script_cs="lib/functions/image/compress-checksum.sh"
 
+    # --- CUSTOMIZE SCRIPT ---
+    # Source is the file one level up
+    local source_customize_script="../customize-image.sh"
+    # Destination is the full path inside build/, including the directory and filename
+    local dest_customize_script="userpatches/customize-image.sh"
+
     # Copy rockchip-rk3588.conf
-    if ! _copy_single_file "$source_conf_rk" "$dest_conf_rk"; then
-        # If _copy_single_file returned 1 (error), and it wasn't just a missing source warning
+    if ! _copy_item "$source_conf_rk" "$dest_conf_rk"; then
+        # If _copy_item returned 1 (error), and it wasn't just a missing source warning
         if [ -f "$source_conf_rk" ]; then # Check if the source existed (meaning it was a real copy error)
              log_msg "### FATAL: Error copying $source_conf_rk. Exiting. ###"
              exit 1
@@ -137,8 +159,8 @@ copy_custom_config() {
     fi
 
     # Copy compress-checksum.sh
-    if ! _copy_single_file "$source_script_cs" "$dest_script_cs"; then
-        # If _copy_single_file returned 1 (error), and it wasn't just a missing source warning
+    if ! _copy_item "$source_script_cs" "$dest_script_cs"; then
+        # If _copy_item returned 1 (error), and it wasn't just a missing source warning
         if [ -f "$source_script_cs" ]; then # Check if the source existed
              log_msg "### FATAL: Error copying $source_script_cs. Exiting. ###"
              exit 1
@@ -147,6 +169,19 @@ copy_custom_config() {
         # Decide if a missing compress-checksum.sh is fatal. Assuming it IS required:
         log_msg "### FATAL: Required custom script '$source_script_cs' not found. Exiting. ###"
         exit 1
+    fi
+
+    # --- Copy the customize-image.sh script ---
+    if ! _copy_item "$source_customize_script" "$dest_customize_script"; then
+        # If _copy_item returned 1 (error), and it wasn't just a missing source warning
+        if [ -e "$source_customize_script" ]; then # Check if the source file existed
+             log_msg "### FATAL: Error copying $source_customize_script. Exiting. ###"
+             exit 1
+        else
+             # If source didn't exist, assume it's required and exit.
+             log_msg "### FATAL: Required custom script '$source_customize_script' not found. Exiting. ###"
+             exit 1
+        fi
     fi
 
     log_msg "--- Custom configuration copy process finished. ---"
