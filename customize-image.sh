@@ -141,6 +141,34 @@ Main() {
             fi
             # --- End Flathub remote add ---
 
+            # --- Install Vivaldi Browser (Noble Desktop Only) ---
+            if [[ "$RELEASE" == "noble" && "$BUILD_DESKTOP" == "yes" ]]; then
+                log_info "Attempting to install Vivaldi Browser for Noble Desktop..."
+                VIVALDI_URL="https://downloads.vivaldi.com/stable/vivaldi-stable_7.3.3635.11-1_arm64.deb"
+                VIVALDI_DEB="/tmp/vivaldi-stable_arm64.deb" # Use /tmp for the download
+
+                log_info "Downloading Vivaldi from $VIVALDI_URL..."
+                if ! wget --no-verbose -O "$VIVALDI_DEB" "$VIVALDI_URL"; then # Added --no-verbose
+                    log_error "Failed to download Vivaldi from $VIVALDI_URL."
+                    # Decide if this is fatal. Let's assume yes for now.
+                    exit 1
+                else
+                    log_info "Vivaldi downloaded successfully to $VIVALDI_DEB."
+
+                    log_info "Installing Vivaldi from $VIVALDI_DEB..."
+                    # Use apt-get install to handle dependencies automatically
+                    if ! apt-get install -y "$VIVALDI_DEB"; then
+                        log_error "Failed to install Vivaldi from $VIVALDI_DEB. Dependencies might be missing or broken."
+                        rm -f "$VIVALDI_DEB" # Clean up even on failure
+                        exit 1
+                    else
+                        log_info "Vivaldi installed successfully."
+                        rm -f "$VIVALDI_DEB" # Clean up after successful installation
+                    fi
+                fi
+            fi
+            # --- End Vivaldi Browser Install ---
+
             # Unlike removal, autoremove is usually not needed immediately after install
         fi
     else
