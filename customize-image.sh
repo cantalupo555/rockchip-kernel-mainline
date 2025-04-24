@@ -169,6 +169,40 @@ Main() {
             fi
             # --- End Vivaldi Browser Install ---
 
+            # --- Apply GNOME Default Settings via dconf Overrides ---
+            if [[ "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then # Check if GNOME is likely installed
+                log_info "Applying GNOME default settings via dconf overrides..."
+
+                # Ensure dconf tools are available (should be with gnome-shell)
+                if command -v dconf &> /dev/null; then
+                    local DCONF_DIR="/etc/dconf/db/local.d"
+                    local DCONF_FILE="$DCONF_DIR/90-armbian-gnome-defaults"
+
+                    log_info "Creating dconf override directory: $DCONF_DIR"
+                    mkdir -p "$DCONF_DIR"
+
+                    log_info "Creating dconf override file: $DCONF_FILE"
+                    # Use cat with heredoc to write the settings
+                    cat << EOF > "$DCONF_FILE"
+[org/gnome/shell]
+favorite-apps=['org.gnome.Nautilus.desktop', 'vivaldi-stable.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Software.desktop']
+
+[org/gnome/desktop/wm/preferences]
+button-layout='appmenu:minimize,maximize,close'
+EOF
+                    log_info "Updating dconf database..."
+                    if ! dconf update; then
+                        log_error "Failed to update dconf database. GNOME settings may not be applied."
+                        # Decide if this is fatal (exit 1) or just a warning
+                    else
+                        log_info "dconf database updated successfully."
+                    fi
+                else
+                    log_warn "dconf command not found. Cannot apply GNOME default settings."
+                fi
+            fi
+            # --- End GNOME Default Settings ---
+
             # Unlike removal, autoremove is usually not needed immediately after install
         fi
     else
