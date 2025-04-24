@@ -33,28 +33,126 @@ Main() {
 
     # Install common packages for all builds (if any)
     # log_info "Installing common packages (e.g., vim, git)..."
-    # if ! apt-get install -y vim git; then
-    #     log_error "Failed to install common packages."
-    #     exit 1
+    # PACKAGES_TO_INSTALL_COMMON="vim git" # Example
+    # if [ -n "$PACKAGES_TO_INSTALL_COMMON" ]; then
+    #     log_info "Attempting to install common packages: $PACKAGES_TO_INSTALL_COMMON"
+    #     if ! apt-get install -y --no-install-recommends $PACKAGES_TO_INSTALL_COMMON; then
+    #         log_error "Failed to install one or more common packages: $PACKAGES_TO_INSTALL_COMMON"
+    #         exit 1
+    #     else
+    #         log_info "Successfully installed common packages."
+    #     fi
     # fi
 
-    # Install Desktop-specific packages
+
+    # --- Install Release-Specific Packages ---
+    # This section handles packages specific to certain releases,
+    # primarily focusing on Desktop builds but adaptable for Server too.
+
+    PACKAGES_TO_INSTALL="" # Initialize variable
+
     if [ "$BUILD_DESKTOP" = "yes" ]; then
-        log_info "Installing Desktop packages (Firefox)..."
-        if ! apt-get install -y firefox; then
-             log_error "Failed to install Firefox."
-             exit 1
-        fi
-        # Other desktop packages/settings here
+        log_info "Checking for release-specific packages to install (Desktop)..."
+        case "$RELEASE" in
+            bookworm)
+                log_info "Targeting packages for installation in Bookworm Desktop..."
+                # Add packages to install specifically for Bookworm Desktop
+                PACKAGES_TO_INSTALL="firefox-esr libreoffice flatpak" # Add more separated by space if needed
+                ;;
+            noble)
+                log_info "Targeting packages for installation in Noble Desktop..."
+                # Add packages to install specifically for Noble Desktop
+                PACKAGES_TO_INSTALL="firefox libreoffice flatpak" # Add more separated by space if needed
+                ;;
+            *)
+                # Default case for other releases not explicitly listed for Desktop
+                log_warn "Release '$RELEASE' has no specific Desktop package installation configuration."
+                ;;
+        esac
+        # Add any other non-release-specific Desktop package installations here if needed
+        # Example: PACKAGES_TO_INSTALL="$PACKAGES_TO_INSTALL package-for-all-desktops"
+
     else
-        log_info "Skipping Desktop packages (not a Desktop build)."
-        # Server packages/settings here (if needed)
-        # log_info "Installing Server packages (e.g., apache2)..."
-        # if ! apt-get install -y apache2; then
-        #      log_error "Failed to install apache2."
-        #      exit 1
-        # fi
+        log_info "Skipping Desktop-specific package installation."
+        # You could add specific Server package installations here if needed
+        # log_info "Checking for release-specific packages to install (Server)..."
+        # case "$RELEASE" in
+        #     bookworm) PACKAGES_TO_INSTALL="apache2 php-fpm";;
+        #     noble) PACKAGES_TO_INSTALL="nginx";;
+        #     *) log_info "No specific Server packages for release '$RELEASE'";;
+        # esac
     fi
+
+    # Proceed with installation only if PACKAGES_TO_INSTALL is not empty
+    if [ -n "$PACKAGES_TO_INSTALL" ]; then
+        log_info "Attempting to install packages for $RELEASE: $PACKAGES_TO_INSTALL"
+        # Use '--no-install-recommends' if you want to minimize extra packages
+        if ! apt-get install -y --no-install-recommends $PACKAGES_TO_INSTALL; then
+            # Installation failure is usually critical, so we exit.
+            log_error "Failed to install one or more packages for $RELEASE: $PACKAGES_TO_INSTALL"
+            exit 1
+        else
+            log_info "Successfully installed packages for $RELEASE."
+            # Unlike removal, autoremove is usually not needed immediately after install
+        fi
+    else
+        # Log message if no packages were targeted for the current release/build type
+        log_info "No specific packages marked for installation for this phase."
+    fi
+    # --- End Install Release-Specific Packages ---
+
+
+    # --- Remove Release-Specific Unwanted Packages ---
+    log_info "Checking for release-specific packages to remove..."
+
+    PACKAGES_TO_REMOVE="" # Initialize variable, will be set based on release
+
+    case "$RELEASE" in
+        noble)
+            log_info "Targeting packages for removal in Noble..."
+            # List packages to remove specifically for Noble
+            PACKAGES_TO_REMOVE="synaptic xarchiver mc terminator"
+            ;;
+        bookworm)
+            log_info "No specific packages targeted for removal in Bookworm."
+            # Example: If you wanted to remove something ONLY in bookworm:
+            # PACKAGES_TO_REMOVE="some-bookworm-package"
+            ;;
+        *)
+            # Default case for other releases not explicitly listed
+            log_info "No specific package removal configuration for release '$RELEASE'."
+            ;;
+    esac
+
+    # Proceed with removal only if PACKAGES_TO_REMOVE is not empty
+    if [ -n "$PACKAGES_TO_REMOVE" ]; then
+        log_info "Attempting to purge packages for $RELEASE: $PACKAGES_TO_REMOVE"
+        # Use 'purge' to remove packages and their configuration files.
+        # Use 'remove' if you want to keep configuration files.
+        if ! apt-get purge -y $PACKAGES_TO_REMOVE; then
+            # Log an error but decide if you want to stop the build (exit 1)
+            # or just warn and continue. For now, let's just warn.
+            log_warn "Could not purge one or more packages for $RELEASE: $PACKAGES_TO_REMOVE. Continuing build."
+            # If removal failure is critical, uncomment the next line:
+            # exit 1
+        else
+            log_info "Successfully purged packages for $RELEASE."
+            # Run autoremove AFTER successful purge to clean up dependencies
+            log_info "Running apt-get autoremove..."
+            if ! apt-get autoremove -y; then
+                log_warn "apt-get autoremove failed. Continuing build."
+                # If autoremove failure is critical, uncomment the next line:
+                # exit 1
+            else
+                log_info "apt-get autoremove completed."
+            fi
+        fi
+    else
+        # Log message if no packages were targeted for the current release
+        log_info "No packages marked for removal for release '$RELEASE'."
+    fi
+    # --- End Remove Release-Specific Unwanted Packages ---
+
 
     # --- Conditional Examples (Commented Out) ---
 
@@ -65,22 +163,6 @@ Main() {
     #     # apt install -y pacote-especifico-opi5plus
     #     # echo "dtoverlay=spi-spidev" >> /boot/armbianEnv.txt # Hypothetical example
     # fi
-
-    # Example: Install different packages depending on the release (RELEASE)
-    # log_info "Checking specific package installation per release..."
-    # case "$RELEASE" in
-    #     noble)
-    #         log_info "Installing package for Noble..."
-    #         # apt install -y pacote-versao-noble
-    #         ;;
-    #     bookworm)
-    #         log_info "Installing package for Bookworm..."
-    #         # apt install -y pacote-versao-bookworm
-    #         ;;
-    #     *)
-    #         log_info "Release $RELEASE has no specific package configuration in this example."
-    #         ;;
-    # esac
 
     # --- End of Commented Examples ---
 
