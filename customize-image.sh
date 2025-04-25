@@ -57,12 +57,17 @@ Main() {
             bookworm)
                 log_info "Targeting packages for installation in Bookworm Desktop..."
                 # Add packages to install specifically for Bookworm Desktop
-                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg"
+                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg net-tools hardinfo2 bmon xfsprogs f2fs-tools vulkan-tools mesa-vulkan-drivers"
                 ;;
             noble)
                 log_info "Targeting packages for installation in Noble Desktop..."
                 # Add packages to install specifically for Noble Desktop
-                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg"
+                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg net-tools hardinfo2 bmon xfsprogs f2fs-tools vulkan-tools mesa-vulkan-drivers"
+                ;;
+            plucky)
+                log_info "Targeting packages for installation in Plucky Desktop (assuming same as Noble for now)..."
+                # Add packages to install specifically for Plucky Desktop
+                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg net-tools hardinfo2 bmon xfsprogs f2fs-tools vulkan-tools mesa-vulkan-drivers"
                 ;;
             *)
                 # Default case for other releases not explicitly listed for Desktop
@@ -95,8 +100,8 @@ Main() {
             log_info "Successfully installed packages for $RELEASE."
 
             # --- Add Flathub remote specifically after installing flatpak packages ---
-            # Check if flatpak was installed and if we are on Noble or Bookworm Desktop
-            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "bookworm") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *flatpak* ]]; then
+            # Check if flatpak was installed and if we are on Noble, Bookworm or Plucky Desktop
+            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *flatpak* ]]; then
                 log_info "Adding Flathub repository for $RELEASE Desktop..."
                 # Ensure flatpak command is available before running
                 if command -v flatpak &> /dev/null; then
@@ -141,8 +146,8 @@ Main() {
             fi
             # --- End Flathub remote add ---
 
-            # --- Install Vivaldi Browser (Noble/Bookworm Desktop Only) ---
-            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "bookworm") && "$BUILD_DESKTOP" == "yes" ]]; then
+            # --- Install Vivaldi Browser (Noble/Bookworm/Plucky Desktop Only) ---
+            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" ]]; then
                 log_info "Attempting to install Vivaldi Browser for $RELEASE Desktop..."
                 VIVALDI_URL="https://downloads.vivaldi.com/stable/vivaldi-stable_7.3.3635.11-1_arm64.deb"
                 VIVALDI_DEB="/tmp/vivaldi-stable_arm64.deb" # Use /tmp for the download
@@ -169,8 +174,8 @@ Main() {
             fi
             # --- End Vivaldi Browser Install ---
 
-            # --- Install Clipboard Indicator Extension (Manual - Noble/Bookworm Desktop Only) ---
-            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "bookworm") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
+            # --- Install Clipboard Indicator Extension (Manual - Noble/Bookworm/Plucky Desktop Only) ---
+            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
                 log_info "Attempting to install Clipboard Indicator extension for $RELEASE Desktop..."
 
                 # Ensure unzip is installed (should be from package list above)
@@ -186,13 +191,17 @@ Main() {
 
                 # Select URL based on Release (GNOME version)
                 if [[ "$RELEASE" == "noble" ]]; then
-                    # v68 for GNOME 46 (Noble) - Check if this is the best version
+                    # v68 for GNOME 46 (Noble)
                     CLIPBOARD_EXT_URL="https://extensions.gnome.org/extension-data/clipboard-indicatortudmotu.com.v68.shell-extension.zip"
                     log_info "Selected Clipboard Indicator v68 for Noble (GNOME 46)."
                 elif [[ "$RELEASE" == "bookworm" ]]; then
                     # v47 for GNOME 43 (Bookworm)
                     CLIPBOARD_EXT_URL="https://extensions.gnome.org/extension-data/clipboard-indicatortudmotu.com.v47.shell-extension.zip"
                     log_info "Selected Clipboard Indicator v47 for Bookworm (GNOME 43)."
+                elif [[ "$RELEASE" == "plucky" ]]; then
+                    # v68 for GNOME 48 (Plucky)
+                    CLIPBOARD_EXT_URL="https://extensions.gnome.org/extension-data/clipboard-indicatortudmotu.com.v68.shell-extension.zip"
+                    log_info "Selected Clipboard Indicator v68 (PLACEHOLDER) for Plucky (GNOME 48)."
                 else
                     # Should not happen due to outer if, but good practice
                     log_error "Unsupported release '$RELEASE' for Clipboard Indicator installation."
@@ -236,8 +245,8 @@ Main() {
             fi
             # --- End Clipboard Indicator Install ---
 
-            # --- Install Dash to Dock Extension (Manual - Noble/Bookworm Desktop Only) ---
-            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "bookworm") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
+            # --- Install Dash to Dock Extension (Manual - Noble/Bookworm/Plucky Desktop Only) ---
+            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
                 log_info "Attempting to install Dash to Dock extension for $RELEASE Desktop..."
 
                 # Ensure unzip is installed
@@ -260,6 +269,10 @@ Main() {
                     # v84 for GNOME 43 (Bookworm)
                     DOCK_EXT_URL="https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v84.shell-extension.zip"
                     log_info "Selected Dash to Dock v84 for Bookworm (GNOME 43)."
+                elif [[ "$RELEASE" == "plucky" ]]; then
+                    # v100 for GNOME 48 (Plucky)
+                    DOCK_EXT_URL="https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v100.shell-extension.zip"
+                    log_info "Selected Dash to Dock v100 (PLACEHOLDER) for Plucky (GNOME 48)."
                 else
                     # Should not happen due to outer if, but good practice
                     log_error "Unsupported release '$RELEASE' for Dash to Dock installation."
@@ -347,6 +360,19 @@ Main() {
                             WALLPAPER_LIGHT=""
                             WALLPAPER_DARK=""
                         fi
+                    elif [[ "$RELEASE" == "plucky" ]]; then
+                        log_info "Setting Ubuntu default wallpapers for Plucky (using Noble paths as placeholders)."
+                        WALLPAPER_LIGHT="file:///usr/share/backgrounds/warty-final-ubuntu.png" # Placeholder - likely wrong name
+                        WALLPAPER_DARK="file:///usr/share/backgrounds/ubuntu-wallpaper-d.png"   # Placeholder - likely wrong name
+                        # Check existence for Plucky (using placeholder paths)
+                        if [ ! -f /usr/share/backgrounds/warty-final-ubuntu.png ]; then # Adjust path if needed later
+                            log_warn "Ubuntu light wallpaper (placeholder path) not found for Plucky, using fallback."
+                            WALLPAPER_LIGHT=""
+                        fi
+                        if [ ! -f /usr/share/backgrounds/ubuntu-wallpaper-d.png ]; then # Adjust path if needed later
+                            log_warn "Ubuntu dark wallpaper (placeholder path) not found for Plucky, using fallback."
+                            WALLPAPER_DARK=""
+                        fi
                     else
                         log_warn "Wallpaper paths not defined for release '$RELEASE', using fallback."
                         WALLPAPER_LIGHT=""
@@ -414,9 +440,9 @@ EOF
     PACKAGES_TO_REMOVE="" # Initialize variable, will be set based on release
 
     case "$RELEASE" in
-        noble | bookworm) # Apply the same removals for both Noble and Bookworm
+        noble | bookworm | plucky) # Apply the same removals for Noble, Bookworm, and Plucky
             log_info "Targeting packages for removal in $RELEASE..."
-            # List packages to remove specifically for Noble/Bookworm
+            # List packages to remove specifically for these releases
             PACKAGES_TO_REMOVE="synaptic xarchiver mc terminator gdebi"
             ;;
         *)
