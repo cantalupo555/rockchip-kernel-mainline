@@ -180,8 +180,8 @@ Main() {
                 fi
 
                 local EXT_UUID="dash-to-dock@micxgx.gmail.com"
-                # Use the v91 URL provided, compatible with GNOME 46 (Noble)
-                local EXT_URL="https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v91.shell-extension.zip"
+                # Use the v100 URL provided, compatible with GNOME 46 (Noble)
+                local EXT_URL="https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v100.shell-extension.zip"
                 local EXT_ZIP="/tmp/dash-to-dock.zip"
                 local EXT_DIR="/usr/share/gnome-shell/extensions/${EXT_UUID}"
 
@@ -209,6 +209,14 @@ Main() {
                     exit 1
                 fi
 
+                # --- Set Permissions ---
+                log_info "Setting correct permissions for $EXT_DIR..."
+                if ! chmod -R a+rX "$EXT_DIR"; then # Give read permission to all, and execute permission to all for directories/already executable files
+                    log_error "Failed to set permissions for $EXT_DIR."
+                    # You might want to add 'exit 1' here if permissions are critical
+                fi
+                # --- End Set Permissions ---
+
                 log_info "Dash to Dock extension files installed successfully to $EXT_DIR."
                 rm -f "$EXT_ZIP" # Clean up downloaded zip
 
@@ -234,8 +242,8 @@ Main() {
 [org/gnome/shell]
 favorite-apps=['org.gnome.Nautilus.desktop', 'vivaldi-stable.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Software.desktop']
 
-# Enable Dash to Dock by default if it was installed
-enabled-extensions=['dash-to-dock@micxgx.gmail.com']
+# Enable extensions by default if they were installed
+enabled-extensions=['dash-to-dock@micxgx.gmail.com', 'system-monitor@gnome-shell-extensions.gcampax.github.com', 'workspace-indicator@gnome-shell-extensions.gcampax.github.com']
 
 [org/gnome/desktop/wm/preferences]
 button-layout='appmenu:minimize,maximize,close'
