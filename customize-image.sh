@@ -95,9 +95,9 @@ Main() {
             log_info "Successfully installed packages for $RELEASE."
 
             # --- Add Flathub remote specifically after installing flatpak packages ---
-            # Check if flatpak was installed and if we are on Noble Desktop
-            if [[ "$RELEASE" == "noble" && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *flatpak* ]]; then
-                log_info "Adding Flathub repository for Noble Desktop..."
+            # Check if flatpak was installed and if we are on Noble or Bookworm Desktop
+            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "bookworm") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *flatpak* ]]; then
+                log_info "Adding Flathub repository for $RELEASE Desktop..."
                 # Ensure flatpak command is available before running
                 if command -v flatpak &> /dev/null; then
                     if ! flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo; then
@@ -141,9 +141,9 @@ Main() {
             fi
             # --- End Flathub remote add ---
 
-            # --- Install Vivaldi Browser (Noble Desktop Only) ---
-            if [[ "$RELEASE" == "noble" && "$BUILD_DESKTOP" == "yes" ]]; then
-                log_info "Attempting to install Vivaldi Browser for Noble Desktop..."
+            # --- Install Vivaldi Browser (Noble/Bookworm Desktop Only) ---
+            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "bookworm") && "$BUILD_DESKTOP" == "yes" ]]; then
+                log_info "Attempting to install Vivaldi Browser for $RELEASE Desktop..."
                 VIVALDI_URL="https://downloads.vivaldi.com/stable/vivaldi-stable_7.3.3635.11-1_arm64.deb"
                 VIVALDI_DEB="/tmp/vivaldi-stable_arm64.deb" # Use /tmp for the download
 
@@ -169,20 +169,35 @@ Main() {
             fi
             # --- End Vivaldi Browser Install ---
 
-            # --- Install Clipboard Indicator Extension (Manual - Noble Desktop Only) ---
-            if [[ "$RELEASE" == "noble" && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
-                log_info "Attempting to install Clipboard Indicator extension for Noble Desktop..."
+            # --- Install Clipboard Indicator Extension (Manual - Noble/Bookworm Desktop Only) ---
+            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "bookworm") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
+                log_info "Attempting to install Clipboard Indicator extension for $RELEASE Desktop..."
 
-                # Ensure unzip is installed (should be from previous steps)
+                # Ensure unzip is installed (should be from package list above)
                 if ! command -v unzip &> /dev/null; then
                     log_error "unzip command not found, but required for extension install. Stopping."
                     exit 1
                 fi
 
                 local CLIPBOARD_EXT_UUID="clipboard-indicator@tudmotu.com"
-                local CLIPBOARD_EXT_URL="https://extensions.gnome.org/extension-data/clipboard-indicatortudmotu.com.v68.shell-extension.zip"
+                local CLIPBOARD_EXT_URL="" # URL will be set based on release
                 local CLIPBOARD_EXT_ZIP="/tmp/clipboard-indicator.zip"
                 local CLIPBOARD_EXT_DIR="/usr/share/gnome-shell/extensions/${CLIPBOARD_EXT_UUID}"
+
+                # Select URL based on Release (GNOME version)
+                if [[ "$RELEASE" == "noble" ]]; then
+                    # v68 for GNOME 46 (Noble) - Check if this is the best version
+                    CLIPBOARD_EXT_URL="https://extensions.gnome.org/extension-data/clipboard-indicatortudmotu.com.v68.shell-extension.zip"
+                    log_info "Selected Clipboard Indicator v68 for Noble (GNOME 46)."
+                elif [[ "$RELEASE" == "bookworm" ]]; then
+                    # v47 for GNOME 43 (Bookworm)
+                    CLIPBOARD_EXT_URL="https://extensions.gnome.org/extension-data/clipboard-indicatortudmotu.com.v47.shell-extension.zip"
+                    log_info "Selected Clipboard Indicator v47 for Bookworm (GNOME 43)."
+                else
+                    # Should not happen due to outer if, but good practice
+                    log_error "Unsupported release '$RELEASE' for Clipboard Indicator installation."
+                    exit 1
+                fi
 
                 log_info "Downloading Clipboard Indicator from $CLIPBOARD_EXT_URL..."
                 if ! wget --no-verbose -O "$CLIPBOARD_EXT_ZIP" "$CLIPBOARD_EXT_URL"; then
@@ -199,7 +214,7 @@ Main() {
                 fi
 
                 log_info "Extracting Clipboard Indicator to $CLIPBOARD_EXT_DIR..."
-                if ! unzip -q "$CLIPBOARD_EXT_ZIP" -d "$CLIPBOARD_EXT_DIR"; then
+                if ! unzip -oq "$CLIPBOARD_EXT_ZIP" -d "$CLIPBOARD_EXT_DIR"; then # Added -o to overwrite without prompt
                     log_error "Failed to extract Clipboard Indicator extension to $CLIPBOARD_EXT_DIR."
                     rm -f "$CLIPBOARD_EXT_ZIP"
                     rm -rf "$CLIPBOARD_EXT_DIR" # Clean up potentially broken extraction
@@ -221,21 +236,35 @@ Main() {
             fi
             # --- End Clipboard Indicator Install ---
 
-            # --- Install Dash to Dock Extension (Manual - Noble Desktop Only) ---
-            if [[ "$RELEASE" == "noble" && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
-                log_info "Attempting to install Dash to Dock extension for Noble Desktop..."
+            # --- Install Dash to Dock Extension (Manual - Noble/Bookworm Desktop Only) ---
+            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "bookworm") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
+                log_info "Attempting to install Dash to Dock extension for $RELEASE Desktop..."
 
-                # Ensure unzip is installed (should be from previous steps)
+                # Ensure unzip is installed
                 if ! command -v unzip &> /dev/null; then
                     log_error "unzip command not found, but required for extension install. Stopping."
                     exit 1
                 fi
 
                 local DOCK_EXT_UUID="dash-to-dock@micxgx.gmail.com"
-                # Use the v100 URL provided, compatible with GNOME 46 (Noble)
-                local DOCK_EXT_URL="https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v100.shell-extension.zip"
+                local DOCK_EXT_URL=""
                 local DOCK_EXT_ZIP="/tmp/dash-to-dock.zip"
                 local DOCK_EXT_DIR="/usr/share/gnome-shell/extensions/${DOCK_EXT_UUID}"
+
+                # Select URL based on Release (GNOME version)
+                if [[ "$RELEASE" == "noble" ]]; then
+                    # v100 for GNOME 46 (Noble)
+                    DOCK_EXT_URL="https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v100.shell-extension.zip"
+                    log_info "Selected Dash to Dock v100 for Noble (GNOME 46)."
+                elif [[ "$RELEASE" == "bookworm" ]]; then
+                    # v84 for GNOME 43 (Bookworm)
+                    DOCK_EXT_URL="https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v84.shell-extension.zip"
+                    log_info "Selected Dash to Dock v84 for Bookworm (GNOME 43)."
+                else
+                    # Should not happen due to outer if, but good practice
+                    log_error "Unsupported release '$RELEASE' for Dash to Dock installation."
+                    exit 1
+                fi
 
                 log_info "Downloading Dash to Dock extension from $DOCK_EXT_URL..."
                 if ! wget --no-verbose -O "$DOCK_EXT_ZIP" "$DOCK_EXT_URL"; then
@@ -253,8 +282,8 @@ Main() {
                 fi
 
                 log_info "Extracting Dash to Dock extension to $DOCK_EXT_DIR..."
-                # Use -q for quiet, -d for destination directory
-                if ! unzip -q "$DOCK_EXT_ZIP" -d "$DOCK_EXT_DIR"; then
+                # Use -o to overwrite files without prompting, useful if re-running
+                if ! unzip -oq "$DOCK_EXT_ZIP" -d "$DOCK_EXT_DIR"; then
                     log_error "Failed to extract Dash to Dock extension to $DOCK_EXT_DIR."
                     rm -f "$DOCK_EXT_ZIP"
                     rm -rf "$DOCK_EXT_DIR" # Clean up potentially broken extraction
@@ -288,19 +317,55 @@ Main() {
                 if command -v dconf &> /dev/null; then
                     local DCONF_DIR="/etc/dconf/db/local.d"
                     local DCONF_FILE="$DCONF_DIR/90-armbian-gnome-defaults"
-                    local UBUNTU_WALLPAPER_LIGHT="file:///usr/share/backgrounds/warty-final-ubuntu.png"
-                    local UBUNTU_WALLPAPER_DARK="file:///usr/share/backgrounds/ubuntu-wallpaper-d.png"
+                    local WALLPAPER_LIGHT=""
+                    local WALLPAPER_DARK=""
+
+                    # --- Define Wallpaper Paths based on Release ---
+                    if [[ "$RELEASE" == "noble" ]]; then
+                        log_info "Setting Ubuntu default wallpapers for Noble."
+                        WALLPAPER_LIGHT="file:///usr/share/backgrounds/warty-final-ubuntu.png"
+                        WALLPAPER_DARK="file:///usr/share/backgrounds/ubuntu-wallpaper-d.png"
+                        # Check existence for Noble
+                        if [ ! -f /usr/share/backgrounds/warty-final-ubuntu.png ]; then
+                            log_warn "Ubuntu light wallpaper not found for Noble, using fallback."
+                            WALLPAPER_LIGHT=""
+                        fi
+                        if [ ! -f /usr/share/backgrounds/ubuntu-wallpaper-d.png ]; then
+                            log_warn "Ubuntu dark wallpaper not found for Noble, using fallback."
+                            WALLPAPER_DARK=""
+                        fi
+                    elif [[ "$RELEASE" == "bookworm" ]]; then
+                        log_info "Setting Debian default wallpaper for Bookworm."
+                        # Debian 12 Emerald theme wallpaper (adjust path/resolution if needed)
+                        local DEBIAN_WALLPAPER_PATH="/usr/share/desktop-base/emerald-theme/wallpaper/contents/images/1920x1080.png"
+                        if [ -f "$DEBIAN_WALLPAPER_PATH" ]; then
+                            WALLPAPER_LIGHT="file://${DEBIAN_WALLPAPER_PATH}"
+                            # Use the same for dark theme, as Debian doesn't have a distinct default dark one usually
+                            WALLPAPER_DARK="file://${DEBIAN_WALLPAPER_PATH}"
+                        else
+                            log_warn "Debian default wallpaper '$DEBIAN_WALLPAPER_PATH' not found for Bookworm, using fallback."
+                            WALLPAPER_LIGHT=""
+                            WALLPAPER_DARK=""
+                        fi
+                    else
+                        log_warn "Wallpaper paths not defined for release '$RELEASE', using fallback."
+                        WALLPAPER_LIGHT=""
+                        WALLPAPER_DARK=""
+                    fi
+                    # --- End Wallpaper Path Definition ---
 
                     log_info "Creating dconf override directory: $DCONF_DIR"
                     mkdir -p "$DCONF_DIR"
 
                     log_info "Creating dconf override file: $DCONF_FILE"
                     # Use cat with heredoc to write the settings
+                    # Note: system-monitor and workspace-indicator are part of gnome-shell-extensions package
                     cat << EOF > "$DCONF_FILE"
 [org/gnome/shell]
 favorite-apps=['org.gnome.Nautilus.desktop', 'vivaldi-stable.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Software.desktop']
 
 # Enable extensions by default if they were installed
+# Ensure these UUIDs match the installed extensions
 enabled-extensions=['clipboard-indicator@tudmotu.com', 'dash-to-dock@micxgx.gmail.com', 'system-monitor@gnome-shell-extensions.gcampax.github.com', 'workspace-indicator@gnome-shell-extensions.gcampax.github.com']
 
 [org/gnome/desktop/wm/preferences]
@@ -313,13 +378,13 @@ sleep-inactive-ac-type='nothing'
 color-scheme='prefer-dark'
 
 [org/gnome/desktop/background]
-picture-uri='$UBUNTU_WALLPAPER_LIGHT'
-picture-uri-dark='$UBUNTU_WALLPAPER_DARK'
+picture-uri='$WALLPAPER_LIGHT'
+picture-uri-dark='$WALLPAPER_DARK'
 picture-options='zoom'
 
 [org/gnome/desktop/screensaver]
-picture-uri='$UBUNTU_WALLPAPER_LIGHT'
-picture-uri-dark='$UBUNTU_WALLPAPER_DARK'
+picture-uri='$WALLPAPER_LIGHT'
+picture-uri-dark='$WALLPAPER_DARK'
 picture-options='zoom'
 EOF
                     log_info "Updating dconf database..."
@@ -349,15 +414,10 @@ EOF
     PACKAGES_TO_REMOVE="" # Initialize variable, will be set based on release
 
     case "$RELEASE" in
-        noble)
-            log_info "Targeting packages for removal in Noble..."
-            # List packages to remove specifically for Noble
+        noble | bookworm) # Apply the same removals for both Noble and Bookworm
+            log_info "Targeting packages for removal in $RELEASE..."
+            # List packages to remove specifically for Noble/Bookworm
             PACKAGES_TO_REMOVE="synaptic xarchiver mc terminator gdebi"
-            ;;
-        bookworm)
-            log_info "No specific packages targeted for removal in Bookworm."
-            # Example: If you wanted to remove something ONLY in bookworm:
-            # PACKAGES_TO_REMOVE="some-bookworm-package"
             ;;
         *)
             # Default case for other releases not explicitly listed
