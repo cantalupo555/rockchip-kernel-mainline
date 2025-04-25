@@ -280,10 +280,16 @@ Main() {
             if [[ "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then # Check if GNOME is likely installed
                 log_info "Applying GNOME default settings via dconf overrides..."
 
+                # Remove potentially conflicting default background settings file from Armbian base
+                log_info "Removing existing dconf background file 00-bg (if it exists)..."
+                rm -f /etc/dconf/db/local.d/00-bg
+
                 # Ensure dconf tools are available (should be with gnome-shell)
                 if command -v dconf &> /dev/null; then
                     local DCONF_DIR="/etc/dconf/db/local.d"
                     local DCONF_FILE="$DCONF_DIR/90-armbian-gnome-defaults"
+                    local UBUNTU_WALLPAPER_LIGHT="file:///usr/share/backgrounds/warty-final-ubuntu.png"
+                    local UBUNTU_WALLPAPER_DARK="file:///usr/share/backgrounds/ubuntu-wallpaper-d.png"
 
                     log_info "Creating dconf override directory: $DCONF_DIR"
                     mkdir -p "$DCONF_DIR"
@@ -305,6 +311,16 @@ sleep-inactive-ac-type='nothing'
 
 [org/gnome/desktop/interface]
 color-scheme='prefer-dark'
+
+[org/gnome/desktop/background]
+picture-uri='$UBUNTU_WALLPAPER_LIGHT'
+picture-uri-dark='$UBUNTU_WALLPAPER_DARK'
+picture-options='zoom'
+
+[org/gnome/desktop/screensaver]
+picture-uri='$UBUNTU_WALLPAPER_LIGHT'
+picture-uri-dark='$UBUNTU_WALLPAPER_DARK'
+picture-options='zoom'
 EOF
                     log_info "Updating dconf database..."
                     if ! dconf update; then
@@ -378,6 +394,14 @@ EOF
     fi
     # --- End Remove Release-Specific Unwanted Packages ---
 
+    # --- Remove Armbian Specific Backgrounds ---
+    if [[ "$BUILD_DESKTOP" == "yes" ]]; then
+        log_info "Removing Armbian specific background directories..."
+        rm -rf /usr/share/backgrounds/armbian
+        rm -rf /usr/share/backgrounds/armbian-lightdm
+        log_info "Armbian background directories removed (if they existed)."
+    fi
+    # --- End Remove Armbian Specific Backgrounds ---
 
     # --- Conditional Examples (Commented Out) ---
 
