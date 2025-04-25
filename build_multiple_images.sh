@@ -134,20 +134,31 @@ _copy_item() {
 
 
 copy_custom_config() {
-    log_msg "Copying custom configuration files and scripts..." # Message updated slightly
+    log_msg "Copying custom configuration files and scripts..."
 
-    # Define item pairs: Source (relative to SCRIPT_DIR) -> Destination (relative to build/)
+    # --- ROCKCHIP FAMILY CONFIG ---
+    # Source: Custom config file for the RK3588 family, located one level up from SCRIPT_DIR.
     local source_conf_rk="../rockchip-rk3588.conf"
+    # Destination: Overwrites the default family config within the build framework.
     local dest_conf_rk="config/sources/families/rockchip-rk3588.conf"
 
+    # --- COMPRESS/CHECKSUM SCRIPT ---
+    # Source: Custom script for image compression/checksum, located one level up.
     local source_script_cs="../compress-checksum.sh"
+    # Destination: Overwrites the default script within the build framework's library functions.
     local dest_script_cs="lib/functions/image/compress-checksum.sh"
 
     # --- CUSTOMIZE SCRIPT ---
     # Source is the file one level up
     local source_customize_script="../customize-image.sh"
-    # Destination is the full path inside build/, including the directory and filename
+    # Destination: Placed in userpatches to be executed during image customization.
     local dest_customize_script="userpatches/customize-image.sh"
+
+    # --- DOCKER CONFIG ---
+    # Source: Custom configuration for Docker build flags, located one level up.
+    local source_docker_conf="../config-docker.conf"
+    # Destination: Placed in userpatches to be sourced by the build framework when using Docker.
+    local dest_docker_conf="userpatches/config-docker.conf"
 
     # Copy rockchip-rk3588.conf
     if ! _copy_item "$source_conf_rk" "$dest_conf_rk"; then
@@ -181,6 +192,19 @@ copy_custom_config() {
         else
              # If source didn't exist, assume it's required and exit.
              log_msg "### FATAL: Required custom script '$source_customize_script' not found. Exiting. ###"
+             exit 1
+        fi
+    fi
+
+    # --- Copy the config-docker.conf ---
+    if ! _copy_item "$source_docker_conf" "$dest_docker_conf"; then
+        # If _copy_item returned 1 (error), check if it was a real copy error or missing source
+        if [ -e "$source_docker_conf" ]; then # Use -e to check existence (file or dir)
+             log_msg "### FATAL: Error copying $source_docker_conf. Exiting. ###"
+             exit 1
+        else
+             # If source didn't exist, assume it's required and exit.
+             log_msg "### FATAL: Required custom config '$source_docker_conf' not found. Exiting. ###"
              exit 1
         fi
     fi
