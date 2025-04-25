@@ -169,56 +169,108 @@ Main() {
             fi
             # --- End Vivaldi Browser Install ---
 
-            # --- Install Dash to Dock Extension (Manual - Noble Desktop Only) ---
+            # --- Install Clipboard Indicator Extension (Manual - Noble Desktop Only) ---
             if [[ "$RELEASE" == "noble" && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
-                log_info "Attempting to install Dash to Dock extension for Noble Desktop..."
+                log_info "Attempting to install Clipboard Indicator extension for Noble Desktop..."
 
-                # Ensure unzip is installed (added to PACKAGES_TO_INSTALL earlier)
+                # Ensure unzip is installed (should be from previous steps)
                 if ! command -v unzip &> /dev/null; then
                     log_error "unzip command not found, but required for extension install. Stopping."
                     exit 1
                 fi
 
-                local EXT_UUID="dash-to-dock@micxgx.gmail.com"
-                # Use the v100 URL provided, compatible with GNOME 46 (Noble)
-                local EXT_URL="https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v100.shell-extension.zip"
-                local EXT_ZIP="/tmp/dash-to-dock.zip"
-                local EXT_DIR="/usr/share/gnome-shell/extensions/${EXT_UUID}"
+                local CLIPBOARD_EXT_UUID="clipboard-indicator@tudmotu.com"
+                local CLIPBOARD_EXT_URL="https://extensions.gnome.org/extension-data/clipboard-indicatortudmotu.com.v68.shell-extension.zip"
+                local CLIPBOARD_EXT_ZIP="/tmp/clipboard-indicator.zip"
+                local CLIPBOARD_EXT_DIR="/usr/share/gnome-shell/extensions/${CLIPBOARD_EXT_UUID}"
 
-                log_info "Downloading Dash to Dock from $EXT_URL..."
-                if ! wget --no-verbose -O "$EXT_ZIP" "$EXT_URL"; then
-                    log_error "Failed to download Dash to Dock extension from $EXT_URL."
-                    rm -f "$EXT_ZIP" # Clean up partial download
+                log_info "Downloading Clipboard Indicator from $CLIPBOARD_EXT_URL..."
+                if ! wget --no-verbose -O "$CLIPBOARD_EXT_ZIP" "$CLIPBOARD_EXT_URL"; then
+                    log_error "Failed to download Clipboard Indicator extension from $CLIPBOARD_EXT_URL."
+                    rm -f "$CLIPBOARD_EXT_ZIP" # Clean up partial download
                     exit 1 # Consider this fatal
                 fi
 
-                log_info "Creating extension directory: $EXT_DIR"
-                # Use -p to create parent directories if needed, although /usr/share/gnome-shell/extensions should exist
-                if ! mkdir -p "$EXT_DIR"; then
-                    log_error "Failed to create extension directory: $EXT_DIR"
-                    rm -f "$EXT_ZIP"
+                log_info "Creating extension directory: $CLIPBOARD_EXT_DIR"
+                if ! mkdir -p "$CLIPBOARD_EXT_DIR"; then
+                    log_error "Failed to create extension directory: $CLIPBOARD_EXT_DIR"
+                    rm -f "$CLIPBOARD_EXT_ZIP"
                     exit 1
                 fi
 
-                log_info "Extracting Dash to Dock to $EXT_DIR..."
-                # Use -q for quiet, -d for destination directory
-                if ! unzip -q "$EXT_ZIP" -d "$EXT_DIR"; then
-                    log_error "Failed to extract Dash to Dock extension to $EXT_DIR."
-                    rm -f "$EXT_ZIP"
-                    rm -rf "$EXT_DIR" # Clean up potentially broken extraction
+                log_info "Extracting Clipboard Indicator to $CLIPBOARD_EXT_DIR..."
+                if ! unzip -q "$CLIPBOARD_EXT_ZIP" -d "$CLIPBOARD_EXT_DIR"; then
+                    log_error "Failed to extract Clipboard Indicator extension to $CLIPBOARD_EXT_DIR."
+                    rm -f "$CLIPBOARD_EXT_ZIP"
+                    rm -rf "$CLIPBOARD_EXT_DIR" # Clean up potentially broken extraction
                     exit 1
                 fi
 
                 # --- Set Permissions ---
-                log_info "Setting correct permissions for $EXT_DIR..."
-                if ! chmod -R a+rX "$EXT_DIR"; then # Give read permission to all, and execute permission to all for directories/already executable files
-                    log_error "Failed to set permissions for $EXT_DIR."
+                log_info "Setting correct permissions for $CLIPBOARD_EXT_DIR..."
+                if ! chmod -R a+rX "$CLIPBOARD_EXT_DIR"; then
+                    log_error "Failed to set permissions for $CLIPBOARD_EXT_DIR."
+                    # Consider adding 'exit 1' if permissions are critical
+                fi
+                # --- End Set Permissions ---
+
+                log_info "Clipboard Indicator extension files installed successfully to $CLIPBOARD_EXT_DIR."
+                rm -f "$CLIPBOARD_EXT_ZIP" # Clean up downloaded zip
+
+                # Enabling happens below in the dconf section modification
+            fi
+            # --- End Clipboard Indicator Install ---
+
+            # --- Install Dash to Dock Extension (Manual - Noble Desktop Only) ---
+            if [[ "$RELEASE" == "noble" && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
+                log_info "Attempting to install Dash to Dock extension for Noble Desktop..."
+
+                # Ensure unzip is installed (should be from previous steps)
+                if ! command -v unzip &> /dev/null; then
+                    log_error "unzip command not found, but required for extension install. Stopping."
+                    exit 1
+                fi
+
+                local DOCK_EXT_UUID="dash-to-dock@micxgx.gmail.com"
+                # Use the v100 URL provided, compatible with GNOME 46 (Noble)
+                local DOCK_EXT_URL="https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v100.shell-extension.zip"
+                local DOCK_EXT_ZIP="/tmp/dash-to-dock.zip"
+                local DOCK_EXT_DIR="/usr/share/gnome-shell/extensions/${DOCK_EXT_UUID}"
+
+                log_info "Downloading Dash to Dock extension from $DOCK_EXT_URL..."
+                if ! wget --no-verbose -O "$DOCK_EXT_ZIP" "$DOCK_EXT_URL"; then
+                    log_error "Failed to download Dash to Dock extension from $DOCK_EXT_URL."
+                    rm -f "$DOCK_EXT_ZIP" # Clean up partial download
+                    exit 1 # Consider this fatal
+                fi
+
+                log_info "Creating extension directory: $DOCK_EXT_DIR"
+                # Use -p to create parent directories if needed, although /usr/share/gnome-shell/extensions should exist
+                if ! mkdir -p "$DOCK_EXT_DIR"; then
+                    log_error "Failed to create extension directory: $DOCK_EXT_DIR"
+                    rm -f "$DOCK_EXT_ZIP"
+                    exit 1
+                fi
+
+                log_info "Extracting Dash to Dock extension to $DOCK_EXT_DIR..."
+                # Use -q for quiet, -d for destination directory
+                if ! unzip -q "$DOCK_EXT_ZIP" -d "$DOCK_EXT_DIR"; then
+                    log_error "Failed to extract Dash to Dock extension to $DOCK_EXT_DIR."
+                    rm -f "$DOCK_EXT_ZIP"
+                    rm -rf "$DOCK_EXT_DIR" # Clean up potentially broken extraction
+                    exit 1
+                fi
+
+                # --- Set Permissions ---
+                log_info "Setting correct permissions for $DOCK_EXT_DIR..."
+                if ! chmod -R a+rX "$DOCK_EXT_DIR"; then # Give read permission to all, and execute permission to all for directories/already executable files
+                    log_error "Failed to set permissions for $DOCK_EXT_DIR."
                     # You might want to add 'exit 1' here if permissions are critical
                 fi
                 # --- End Set Permissions ---
 
-                log_info "Dash to Dock extension files installed successfully to $EXT_DIR."
-                rm -f "$EXT_ZIP" # Clean up downloaded zip
+                log_info "Dash to Dock extension files installed successfully to $DOCK_EXT_DIR."
+                rm -f "$DOCK_EXT_ZIP" # Clean up downloaded zip
 
                 # Enabling happens below in the dconf section modification
             fi
@@ -243,7 +295,7 @@ Main() {
 favorite-apps=['org.gnome.Nautilus.desktop', 'vivaldi-stable.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Software.desktop']
 
 # Enable extensions by default if they were installed
-enabled-extensions=['dash-to-dock@micxgx.gmail.com', 'system-monitor@gnome-shell-extensions.gcampax.github.com', 'workspace-indicator@gnome-shell-extensions.gcampax.github.com']
+enabled-extensions=['clipboard-indicator@tudmotu.com', 'dash-to-dock@micxgx.gmail.com', 'system-monitor@gnome-shell-extensions.gcampax.github.com', 'workspace-indicator@gnome-shell-extensions.gcampax.github.com']
 
 [org/gnome/desktop/wm/preferences]
 button-layout='appmenu:minimize,maximize,close'
