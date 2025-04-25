@@ -57,12 +57,12 @@ Main() {
             bookworm)
                 log_info "Targeting packages for installation in Bookworm Desktop..."
                 # Add packages to install specifically for Bookworm Desktop
-                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator xdg-utils fonts-liberation" # Added wget (useful for downloads)
+                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince thunderbird vlc mplayer xdg-utils fonts-liberation"
                 ;;
             noble)
                 log_info "Targeting packages for installation in Noble Desktop..."
                 # Add packages to install specifically for Noble Desktop
-                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator xdg-utils fonts-liberation" # Added wget
+                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince thunderbird vlc mplayer xdg-utils fonts-liberation"
                 ;;
             *)
                 # Default case for other releases not explicitly listed for Desktop
@@ -169,6 +169,53 @@ Main() {
             fi
             # --- End Vivaldi Browser Install ---
 
+            # --- Install Dash to Dock Extension (Manual - Noble Desktop Only) ---
+            if [[ "$RELEASE" == "noble" && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
+                log_info "Attempting to install Dash to Dock extension for Noble Desktop..."
+
+                # Ensure unzip is installed (added to PACKAGES_TO_INSTALL earlier)
+                if ! command -v unzip &> /dev/null; then
+                    log_error "unzip command not found, but required for extension install. Stopping."
+                    exit 1
+                fi
+
+                local EXT_UUID="dash-to-dock@micxgx.gmail.com"
+                # Use the v91 URL provided, compatible with GNOME 46 (Noble)
+                local EXT_URL="https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v91.shell-extension.zip"
+                local EXT_ZIP="/tmp/dash-to-dock.zip"
+                local EXT_DIR="/usr/share/gnome-shell/extensions/${EXT_UUID}"
+
+                log_info "Downloading Dash to Dock from $EXT_URL..."
+                if ! wget --no-verbose -O "$EXT_ZIP" "$EXT_URL"; then
+                    log_error "Failed to download Dash to Dock extension from $EXT_URL."
+                    rm -f "$EXT_ZIP" # Clean up partial download
+                    exit 1 # Consider this fatal
+                fi
+
+                log_info "Creating extension directory: $EXT_DIR"
+                # Use -p to create parent directories if needed, although /usr/share/gnome-shell/extensions should exist
+                if ! mkdir -p "$EXT_DIR"; then
+                    log_error "Failed to create extension directory: $EXT_DIR"
+                    rm -f "$EXT_ZIP"
+                    exit 1
+                fi
+
+                log_info "Extracting Dash to Dock to $EXT_DIR..."
+                # Use -q for quiet, -d for destination directory
+                if ! unzip -q "$EXT_ZIP" -d "$EXT_DIR"; then
+                    log_error "Failed to extract Dash to Dock extension to $EXT_DIR."
+                    rm -f "$EXT_ZIP"
+                    rm -rf "$EXT_DIR" # Clean up potentially broken extraction
+                    exit 1
+                fi
+
+                log_info "Dash to Dock extension files installed successfully to $EXT_DIR."
+                rm -f "$EXT_ZIP" # Clean up downloaded zip
+
+                # Enabling happens below in the dconf section modification
+            fi
+            # --- End Dash to Dock Install ---
+
             # --- Apply GNOME Default Settings via dconf Overrides ---
             if [[ "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then # Check if GNOME is likely installed
                 log_info "Applying GNOME default settings via dconf overrides..."
@@ -186,6 +233,9 @@ Main() {
                     cat << EOF > "$DCONF_FILE"
 [org/gnome/shell]
 favorite-apps=['org.gnome.Nautilus.desktop', 'vivaldi-stable.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Software.desktop']
+
+# Enable Dash to Dock by default if it was installed
+enabled-extensions=['dash-to-dock@micxgx.gmail.com']
 
 [org/gnome/desktop/wm/preferences]
 button-layout='appmenu:minimize,maximize,close'
