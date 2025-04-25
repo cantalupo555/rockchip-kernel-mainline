@@ -57,12 +57,12 @@ Main() {
             bookworm)
                 log_info "Targeting packages for installation in Bookworm Desktop..."
                 # Add packages to install specifically for Bookworm Desktop
-                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince thunderbird vlc mplayer xdg-utils fonts-liberation"
+                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg"
                 ;;
             noble)
                 log_info "Targeting packages for installation in Noble Desktop..."
                 # Add packages to install specifically for Noble Desktop
-                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince thunderbird vlc mplayer xdg-utils fonts-liberation"
+                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg"
                 ;;
             *)
                 # Default case for other releases not explicitly listed for Desktop
@@ -299,6 +299,12 @@ enabled-extensions=['clipboard-indicator@tudmotu.com', 'dash-to-dock@micxgx.gmai
 
 [org/gnome/desktop/wm/preferences]
 button-layout='appmenu:minimize,maximize,close'
+
+[org/gnome/settings-daemon/plugins/power]
+sleep-inactive-ac-type='nothing'
+
+[org/gnome/desktop/interface]
+color-scheme='prefer-dark'
 EOF
                     log_info "Updating dconf database..."
                     if ! dconf update; then
