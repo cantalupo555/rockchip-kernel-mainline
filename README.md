@@ -4,7 +4,7 @@ This repository contains scripts and configurations to automate the building of 
 
 ## Overview
 
-The main script, `build_multiple_images.sh`, orchestrates the build process, allowing the generation of images for different combinations of:
+The main script, `multi_armbian_builder.sh`, orchestrates the build process, allowing the generation of images for different combinations of:
 
 *   Boards
 *   Releases
@@ -39,7 +39,7 @@ It utilizes the [official Armbian build framework](https://github.com/armbian/bu
     cd <CLONED_DIRECTORY_NAME>
     ```
 2.  **Adjust Build Parameters (Optional):**
-    *   Open the `build_multiple_images.sh` file in a text editor.
+    *   Open the `multi_armbian_builder.sh` file in a text editor.
     *   Modify the `BOARDS`, `RELEASES`, `DESKTOPS` arrays and other parameter variables (like `BRANCH`, `ROOTFS_TYPE`, etc.) at the beginning of the script to define the images you want to build.
 3.  **Adjust Board Configuration (Optional):**
     *   If necessary, edit the `rockchip-rk3588.conf` file to change specific kernel, U-Boot, or patch settings for the RK3588 family.
@@ -50,16 +50,16 @@ It utilizes the [official Armbian build framework](https://github.com/armbian/bu
 
 1.  **Make the script executable:**
     ```bash
-    chmod +x build_multiple_images.sh
+    chmod +x multi_armbian_builder.sh
     ```
 2.  **Run the script:**
     ```bash
-    ./build_multiple_images.sh
+    ./multi_armbian_builder.sh
     ```
 3.  **Run with Log to File (Recommended):**
     To save the detailed output to a log file, use the `tee` command:
     ```bash
-    ./build_multiple_images.sh | tee build_log_$(date +%Y%m%d_%H%M%S).txt
+    ./multi_armbian_builder.sh | tee build_log_$(date +%Y%m%d_%H%M%S).txt
     ```
 
 The script will:
