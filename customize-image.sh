@@ -57,17 +57,17 @@ Main() {
             bookworm)
                 log_info "Targeting packages for installation in Bookworm Desktop..."
                 # Add packages to install specifically for Bookworm Desktop
-                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg net-tools hardinfo2 bmon xfsprogs f2fs-tools vulkan-tools mesa-vulkan-drivers"
+                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg net-tools bmon xfsprogs f2fs-tools vulkan-tools mesa-vulkan-drivers stress"
                 ;;
             noble)
                 log_info "Targeting packages for installation in Noble Desktop..."
                 # Add packages to install specifically for Noble Desktop
-                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg net-tools hardinfo2 bmon xfsprogs f2fs-tools vulkan-tools mesa-vulkan-drivers"
+                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg net-tools bmon xfsprogs f2fs-tools vulkan-tools mesa-vulkan-drivers stress"
                 ;;
             plucky)
                 log_info "Targeting packages for installation in Plucky Desktop (assuming same as Noble for now)..."
                 # Add packages to install specifically for Plucky Desktop
-                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg net-tools hardinfo2 bmon xfsprogs f2fs-tools vulkan-tools mesa-vulkan-drivers"
+                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg net-tools hardinfo2 bmon xfsprogs f2fs-tools vulkan-tools mesa-vulkan-drivers stress cmake cpufrequtils zstd zram-config rtkit wireplumber"
                 ;;
             *)
                 # Default case for other releases not explicitly listed for Desktop
@@ -488,6 +488,92 @@ EOF
         log_info "Armbian background directories removed (if they existed)."
     fi
     # --- End Remove Armbian Specific Backgrounds ---
+
+    # --- Configure ZRAM using a custom init script ---
+    # This assumes zram-config and zram-tools packages are installed
+    if [[ "$PACKAGES_TO_INSTALL" == *zram-tools* ]]; then
+        log_info "Creating and installing custom /usr/bin/init-zram-swapping script..."
+
+        local CUSTOM_ZRAM_SCRIPT="/usr/bin/init-zram-swapping"
+
+        # Create the custom script content
+        cat << 'EOF' > "$CUSTOM_ZRAM_SCRIPT"
+#!/bin/sh
+
+log_info() { echo "[CUSTOMIZE-ZRAM] INFO: $1"; }
+log_warn() { echo "[CUSTOMIZE-ZRAM] WARN: $1" >&2; }
+log_error() { echo "[CUSTOMIZE-ZRAM] ERROR: $1" >&2; }
+
+log_info "Starting custom ZRAM initialization..."
+
+modprobe zram || { log_error "Failed to load zram module."; exit 1; }
+log_info "zram module loaded."
+
+# Calculate memory to use for zram (1/2 of ram)
+totalmem_kb=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+if [ -z "$totalmem_kb" ]; then
+    log_error "Could not determine total system memory."
+    exit 1
+fi
+mem_bytes=$((totalmem_kb / 2 * 1024)) # Half of RAM in bytes
+
+# initialize the device zram0
+log_info "Configuring /dev/zram0 with size ${mem_bytes} bytes and zstd compression..."
+echo zstd > /sys/block/zram0/comp_algorithm || { log_error "Failed to set zram0 compression algorithm."; exit 1; }
+echo $mem_bytes > /sys/block/zram0/disksize || { log_error "Failed to set zram0 disksize."; exit 1; }
+mkswap /dev/zram0 || { log_error "Failed to format /dev/zram0 as swap."; exit 1; }
+swapon -p 100 /dev/zram0 || { log_error "Failed to enable /dev/zram0 as swap."; exit 1; }
+
+log_info "Custom ZRAM initialization finished."
+EOF
+
+        # Make the script executable
+        log_info "Setting executable permissions for $CUSTOM_ZRAM_SCRIPT..."
+        if ! chmod +x "$CUSTOM_ZRAM_SCRIPT"; then
+            log_error "Failed to set executable permissions for $CUSTOM_ZRAM_SCRIPT."
+            # Decide if this is fatal. It likely is, as the script won't run.
+            exit 1
+        fi
+
+        log_info "Custom /usr/bin/init-zram-swapping script installed and configured."
+
+        # Optional: Disable the default zram-tools service if it conflicts
+        # This might be necessary depending on how zram-tools is packaged and
+        # if its service file explicitly calls the default script path.
+        # If your custom script replaces the file at the expected path,
+        # the existing service might just run your script.
+        # If you encounter issues with ZRAM not starting or starting incorrectly,
+        # you might need to investigate the zram-tools service unit file
+        # (e.g., /lib/systemd/system/zramswap.service) and potentially disable it
+        # or mask it, or modify it to call your script explicitly.
+        # For now, we assume replacing the file is sufficient.
+
+    fi
+    # --- End Configure ZRAM ---
+
+    # --- Configure Kernel Parameters via sysctl.conf ---
+    log_info "Adding custom kernel parameters to /etc/sysctl.conf..."
+
+    local SYSCTL_CONF_FILE="/etc/sysctl.conf"
+
+    # Use tee -a to append to the file, creating it if it doesn't exist
+    # Use quotes around EOF to prevent shell expansion within the heredoc
+    cat << 'EOF' | tee -a "$SYSCTL_CONF_FILE"
+
+# Custom settings added by customize-image.sh for performance/memory management
+vm.swappiness=100
+vm.vfs_cache_pressure=500
+vm.dirty_ratio=50
+vm.dirty_background_ratio=1
+vm.page-cluster=0
+EOF
+
+    # Note: These settings will be applied automatically on boot by the systemd-sysctl service
+    # or equivalent SysVinit script that processes /etc/sysctl.conf.
+    # No need to run 'sysctl -p' during the build process itself.
+
+    log_info "Custom kernel parameters added to $SYSCTL_CONF_FILE."
+    # --- End Configure Kernel Parameters ---
 
     # --- Conditional Examples (Commented Out) ---
 
