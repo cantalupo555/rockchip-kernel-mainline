@@ -164,7 +164,7 @@ copy_custom_config() {
     # Source: Custom armbian-zram-config file, located one level up.
     local source_zram_config="../armbian-zram-config"
     # Destination: Placed in userpatches/overlay to be copied directly to /etc/default/ in the image.
-    local dest_zram_config="userpatches/overlay/etc/default/armbian-zram-config"
+    local dest_zram_config="userpatches/overlay/armbian-zram-config"
 
     # --- KERNEL CONFIG (EDGE) ---
     # Source: Custom kernel config file for edge, located one level up.

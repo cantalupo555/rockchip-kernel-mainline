@@ -44,7 +44,6 @@ Main() {
     #     fi
     # fi
 
-
     # --- Install Release-Specific Packages ---
     # This section handles packages specific to certain releases,
     # primarily focusing on Desktop builds but adaptable for Server too.
@@ -501,12 +500,36 @@ EOF
 
     # --- End of Commented Examples ---
 
+    # --- Section to copy overlay configuration files...
+    log_info "Copying overlay configuration files..."
+    OVERLAY_DIR="/tmp/overlay"
 
-    # Copy files from overlay (example)
-    # if [ -f /tmp/overlay/meu-config.conf ]; then
-    #     log_info "Copying my-config.conf from overlay..."
-    #     cp /tmp/overlay/meu-config.conf /etc/meu-config.conf
-    # fi
+    # Check and copy armbian-zram-config to /etc/default/
+    if [ -f "${OVERLAY_DIR}/armbian-zram-config" ]; then
+        DEST_DIR="/etc/default"
+        mkdir -p "${DEST_DIR}" # Create destination directory if it doesn't exist
+        if cp "${OVERLAY_DIR}/armbian-zram-config" "${DEST_DIR}/armbian-zram-config"; then
+            log_info "armbian-zram-config copied successfully to ${DEST_DIR}."
+            # Set appropriate permissions (e.g., read for all, write for owner)
+            chmod 644 "${DEST_DIR}/armbian-zram-config"
+            # Optional: Enable the service if necessary (if the service exists)
+            if command -v systemctl &> /dev/null; then
+                if systemctl is-enabled armbian-zram-config &> /dev/null; then
+                    log_info "Service armbian-zram-config is already enabled."
+                else
+                    systemctl enable armbian-zram-config
+                    log_info "Service armbian-zram-config enabled."
+                fi
+            else
+                log_warn "systemctl not found. Cannot enable the service automatically."
+            fi
+        else
+            log_warn "Failed to copy armbian-zram-config. Check for errors or permissions."
+        fi
+    else
+        log_info "armbian-zram-config not found in overlay. Skipping."
+    fi
+    # --- End of section for copying overlay configuration files
 
     log_info "--- Finishing custom image customization ---"
 
