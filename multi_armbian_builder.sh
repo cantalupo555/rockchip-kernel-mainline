@@ -166,6 +166,12 @@ copy_custom_config() {
     # Destination: Placed in userpatches/overlay to be copied directly to /etc/default/ in the image.
     local dest_zram_config="userpatches/overlay/etc/default/armbian-zram-config"
 
+    # --- KERNEL CONFIG (EDGE) ---
+    # Source: Custom kernel config file for edge, located one level up.
+    local source_kernel_conf_edge="../linux-rockchip-rk3588-edge.config"
+    # Destination: Overwrites the default edge kernel config within the build framework.
+    local dest_kernel_conf_edge="config/kernel/linux-rockchip-rk3588-edge.config"
+
 
     # Copy rockchip-rk3588.conf
     if ! _copy_item "$source_conf_rk" "$dest_conf_rk"; then
@@ -225,6 +231,19 @@ copy_custom_config() {
         else
              # If source didn't exist, assume it's required and exit.
              log_msg "### FATAL: Required custom config '$source_zram_config' not found. Exiting. ###"
+             exit 1
+        fi
+    fi
+
+    # --- Copy the linux-rockchip-rk3588-edge.config ---
+    if ! _copy_item "$source_kernel_conf_edge" "$dest_kernel_conf_edge"; then
+        # If _copy_item returned 1 (error), check if it was a real copy error or missing source
+        if [ -e "$source_kernel_conf_edge" ]; then # Use -e to check existence (file or dir)
+             log_msg "### FATAL: Error copying $source_kernel_conf_edge. Exiting. ###"
+             exit 1
+        else
+             # If source didn't exist, assume it's required and exit.
+             log_msg "### FATAL: Required custom kernel config '$source_kernel_conf_edge' not found. Exiting. ###"
              exit 1
         fi
     fi
