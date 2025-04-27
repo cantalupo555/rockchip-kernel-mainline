@@ -166,11 +166,6 @@ copy_custom_config() {
     # Destination: Placed in userpatches/overlay to be copied directly to /etc/default/ in the image.
     local dest_zram_config="userpatches/overlay/etc/default/armbian-zram-config"
 
-    # --- SYSCTL.CONF OVERLAY ---
-    # Source: Custom sysctl.conf file, located one level up.
-    local source_sysctl_conf="../sysctl.conf"
-    # Destination: Placed in userpatches/overlay to be copied directly to /etc/ in the image.
-    local dest_sysctl_conf="userpatches/overlay/etc/sysctl.conf"
 
     # Copy rockchip-rk3588.conf
     if ! _copy_item "$source_conf_rk" "$dest_conf_rk"; then
@@ -230,19 +225,6 @@ copy_custom_config() {
         else
              # If source didn't exist, assume it's required and exit.
              log_msg "### FATAL: Required custom config '$source_zram_config' not found. Exiting. ###"
-             exit 1
-        fi
-    fi
-
-    # --- Copy the sysctl.conf file to overlay ---
-    if ! _copy_item "$source_sysctl_conf" "$dest_sysctl_conf"; then
-        # If _copy_item returned 1 (error), check if it was a real copy error or missing source
-        if [ -e "$source_sysctl_conf" ]; then # Use -e to check existence (file or dir)
-             log_msg "### FATAL: Error copying $source_sysctl_conf. Exiting. ###"
-             exit 1
-        else
-             # If source didn't exist, assume it's required and exit.
-             log_msg "### FATAL: Required custom config '$source_sysctl_conf' not found. Exiting. ###"
              exit 1
         fi
     fi
