@@ -6,7 +6,7 @@
 
 # Define the desired variations
 BOARDS=("orangepi5" "orangepi5-plus" "rock-5a" "rock-5b" "rock-5b-plus")
-RELEASES=("plucky")
+RELEASES=("noble")
 DESKTOPS=("gnome") # Only for the desktop section
 
 # Fixed base parameters for all builds (unless overridden)
