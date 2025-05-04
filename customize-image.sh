@@ -333,17 +333,17 @@ Main() {
                     local WALLPAPER_DARK=""
 
                     # --- Define Wallpaper Paths based on Release ---
-                    if [[ "$RELEASE" == "noble" || "$RELEASE" == "oracular" ]]; then
-                        log_info "Setting Ubuntu default wallpapers for Noble/Oracular."
+                    if [[ "$RELEASE" == "noble" || "$RELEASE" == "oracular" || "$RELEASE" == "plucky" ]]; then
+                        log_info "Setting Ubuntu default wallpapers for Noble/Oracular/Plucky."
                         WALLPAPER_LIGHT="file:///usr/share/backgrounds/warty-final-ubuntu.png"
                         WALLPAPER_DARK="file:///usr/share/backgrounds/ubuntu-wallpaper-d.png"
-                        # Check existence for Noble/Oracular
+                        # Check existence for Noble/Oracular/Plucky
                         if [ ! -f /usr/share/backgrounds/warty-final-ubuntu.png ]; then
-                            log_warn "Ubuntu light wallpaper not found for Noble/Oracular, using fallback."
+                            log_warn "Ubuntu light wallpaper not found for Noble/Oracular/Plucky, using fallback."
                             WALLPAPER_LIGHT=""
                         fi
                         if [ ! -f /usr/share/backgrounds/ubuntu-wallpaper-d.png ]; then
-                            log_warn "Ubuntu dark wallpaper not found for Noble/Oracular, using fallback."
+                            log_warn "Ubuntu dark wallpaper not found for Noble/Oracular/Plucky, using fallback."
                             WALLPAPER_DARK=""
                         fi
                     elif [[ "$RELEASE" == "bookworm" ]]; then
@@ -357,19 +357,6 @@ Main() {
                         else
                             log_warn "Debian default wallpaper '$DEBIAN_WALLPAPER_PATH' not found for Bookworm, using fallback."
                             WALLPAPER_LIGHT=""
-                            WALLPAPER_DARK=""
-                        fi
-                    elif [[ "$RELEASE" == "plucky" ]]; then
-                        log_info "Setting Ubuntu default wallpapers for Plucky (using Noble paths as placeholders)."
-                        WALLPAPER_LIGHT="file:///usr/share/backgrounds/warty-final-ubuntu.png" # Placeholder - likely wrong name
-                        WALLPAPER_DARK="file:///usr/share/backgrounds/ubuntu-wallpaper-d.png"   # Placeholder - likely wrong name
-                        # Check existence for Plucky (using placeholder paths)
-                        if [ ! -f /usr/share/backgrounds/warty-final-ubuntu.png ]; then # Adjust path if needed later
-                            log_warn "Ubuntu light wallpaper (placeholder path) not found for Plucky, using fallback."
-                            WALLPAPER_LIGHT=""
-                        fi
-                        if [ ! -f /usr/share/backgrounds/ubuntu-wallpaper-d.png ]; then # Adjust path if needed later
-                            log_warn "Ubuntu dark wallpaper (placeholder path) not found for Plucky, using fallback."
                             WALLPAPER_DARK=""
                         fi
                     else
