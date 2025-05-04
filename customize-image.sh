@@ -56,17 +56,17 @@ Main() {
             bookworm)
                 log_info "Targeting packages for installation in Bookworm Desktop..."
                 # Add packages to install specifically for Bookworm Desktop
-                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg net-tools bmon xfsprogs f2fs-tools vulkan-tools mesa-vulkan-drivers stress cmake cpufrequtils lm-sensors zstd rtkit wireplumber snapd gnome-software"
+                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg net-tools bmon xfsprogs f2fs-tools vulkan-tools mesa-vulkan-drivers stress cmake cpufrequtils lm-sensors zstd wireplumber pipewire pipewire-pulse snapd gnome-software"
                 ;;
             noble)
                 log_info "Targeting packages for installation in Noble Desktop..."
                 # Add packages to install specifically for Noble Desktop
-                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg net-tools bmon xfsprogs f2fs-tools vulkan-tools mesa-vulkan-drivers stress cmake cpufrequtils lm-sensors zstd rtkit wireplumber snapd gnome-software"
+                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg net-tools bmon xfsprogs f2fs-tools vulkan-tools mesa-vulkan-drivers stress cmake cpufrequtils lm-sensors zstd wireplumber pipewire pipewire-pulse snapd gnome-software"
                 ;;
             plucky)
                 log_info "Targeting packages for installation in Plucky Desktop (assuming same as Noble for now)..."
                 # Add packages to install specifically for Plucky Desktop
-                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg net-tools bmon xfsprogs f2fs-tools vulkan-tools mesa-vulkan-drivers stress cmake cpufrequtils lm-sensors zstd rtkit wireplumber snapd gnome-software hardinfo2"
+                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg net-tools bmon xfsprogs f2fs-tools vulkan-tools mesa-vulkan-drivers stress cmake cpufrequtils lm-sensors zstd wireplumber pipewire pipewire-pulse snapd gnome-software hardinfo2"
                 ;;
             *)
                 # Default case for other releases not explicitly listed for Desktop
