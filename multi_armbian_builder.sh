@@ -24,6 +24,7 @@ BUILD_MINIMAL="no"
 KERNEL_BTF="yes" # Forcing BTF=yes as requested
 EXPERT="yes"
 PROGRESS_LOG_TO_FILE="yes" # Enable progress logging to file
+NO_HOST_RELEASE_CHECK="yes" # Skip host release check
 
 # --- Global Variables ---
 SCRIPT_DIR=""
@@ -308,6 +309,7 @@ run_desktop_builds() {
             KERNEL_BTF="$KERNEL_BTF" \
             EXPERT="$EXPERT" \
             PROGRESS_LOG_TO_FILE="$PROGRESS_LOG_TO_FILE" \
+            NO_HOST_RELEASE_CHECK="$NO_HOST_RELEASE_CHECK" \
             $CLEAN_OPT # Add the determined cleaning option
 
           # Check the exit status
@@ -381,6 +383,7 @@ run_server_builds() {
           KERNEL_BTF="$KERNEL_BTF" \
           EXPERT="$EXPERT" \
           PROGRESS_LOG_TO_FILE="$PROGRESS_LOG_TO_FILE" \
+          NO_HOST_RELEASE_CHECK="$NO_HOST_RELEASE_CHECK" \
           $CLEAN_OPT # Add the determined cleaning option
 
         # Check the exit status
