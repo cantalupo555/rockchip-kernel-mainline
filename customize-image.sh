@@ -58,9 +58,9 @@ Main() {
                 # Add packages to install specifically for Bookworm Desktop
                 PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg net-tools bmon xfsprogs f2fs-tools vulkan-tools mesa-vulkan-drivers stress cmake cpufrequtils lm-sensors zstd wireplumber pipewire pipewire-pulse snapd gnome-software"
                 ;;
-            noble)
-                log_info "Targeting packages for installation in Noble Desktop..."
-                # Add packages to install specifically for Noble Desktop
+            noble | oracular)
+                log_info "Targeting packages for installation in Noble/Oracular Desktop..."
+                # Add packages to install specifically for Noble/Oracular Desktop
                 PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg net-tools bmon xfsprogs f2fs-tools vulkan-tools mesa-vulkan-drivers stress cmake cpufrequtils lm-sensors zstd wireplumber pipewire pipewire-pulse snapd gnome-software"
                 ;;
             plucky)
@@ -100,7 +100,7 @@ Main() {
 
             # --- Add Flathub remote specifically after installing flatpak packages ---
             # Check if flatpak was installed and if we are on Noble, Bookworm or Plucky Desktop
-            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *flatpak* ]]; then
+            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "oracular" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *flatpak* ]]; then
                 log_info "Adding Flathub repository for $RELEASE Desktop..."
                 # Ensure flatpak command is available before running
                 if command -v flatpak &> /dev/null; then
@@ -146,7 +146,7 @@ Main() {
             # --- End Flathub remote add ---
 
             # --- Install Vivaldi Browser (Noble/Bookworm/Plucky Desktop Only) ---
-            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" ]]; then
+            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "oracular" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" ]]; then
                 log_info "Attempting to install Vivaldi Browser for $RELEASE Desktop..."
                 VIVALDI_URL="https://downloads.vivaldi.com/stable/vivaldi-stable_7.3.3635.11-1_arm64.deb"
                 VIVALDI_DEB="/tmp/vivaldi-stable_arm64.deb" # Use /tmp for the download
@@ -174,7 +174,7 @@ Main() {
             # --- End Vivaldi Browser Install ---
 
             # --- Install Clipboard Indicator Extension (Manual - Noble/Bookworm/Plucky Desktop Only) ---
-            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
+            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "oracular" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
                 log_info "Attempting to install Clipboard Indicator extension for $RELEASE Desktop..."
 
                 # Ensure unzip is installed (should be from package list above)
@@ -189,10 +189,10 @@ Main() {
                 local CLIPBOARD_EXT_DIR="/usr/share/gnome-shell/extensions/${CLIPBOARD_EXT_UUID}"
 
                 # Select URL based on Release (GNOME version)
-                if [[ "$RELEASE" == "noble" ]]; then
-                    # v68 for GNOME 46 (Noble)
+                if [[ "$RELEASE" == "noble" || "$RELEASE" == "oracular" ]]; then
+                    # v68 for GNOME 46 (Noble/Oracular)
                     CLIPBOARD_EXT_URL="https://extensions.gnome.org/extension-data/clipboard-indicatortudmotu.com.v68.shell-extension.zip"
-                    log_info "Selected Clipboard Indicator v68 for Noble (GNOME 46)."
+                    log_info "Selected Clipboard Indicator v68 for Noble/Oracular (GNOME 46)."
                 elif [[ "$RELEASE" == "bookworm" ]]; then
                     # v47 for GNOME 43 (Bookworm)
                     CLIPBOARD_EXT_URL="https://extensions.gnome.org/extension-data/clipboard-indicatortudmotu.com.v47.shell-extension.zip"
@@ -245,7 +245,7 @@ Main() {
             # --- End Clipboard Indicator Install ---
 
             # --- Install Dash to Dock Extension (Manual - Noble/Bookworm/Plucky Desktop Only) ---
-            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
+            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "oracular" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
                 log_info "Attempting to install Dash to Dock extension for $RELEASE Desktop..."
 
                 # Ensure unzip is installed
@@ -260,10 +260,10 @@ Main() {
                 local DOCK_EXT_DIR="/usr/share/gnome-shell/extensions/${DOCK_EXT_UUID}"
 
                 # Select URL based on Release (GNOME version)
-                if [[ "$RELEASE" == "noble" ]]; then
-                    # v100 for GNOME 46 (Noble)
+                if [[ "$RELEASE" == "noble" || "$RELEASE" == "oracular" ]]; then
+                    # v100 for GNOME 46 (Noble/Oracular)
                     DOCK_EXT_URL="https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v100.shell-extension.zip"
-                    log_info "Selected Dash to Dock v100 for Noble (GNOME 46)."
+                    log_info "Selected Dash to Dock v100 for Noble/Oracular (GNOME 46)."
                 elif [[ "$RELEASE" == "bookworm" ]]; then
                     # v84 for GNOME 43 (Bookworm)
                     DOCK_EXT_URL="https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v84.shell-extension.zip"
@@ -333,17 +333,17 @@ Main() {
                     local WALLPAPER_DARK=""
 
                     # --- Define Wallpaper Paths based on Release ---
-                    if [[ "$RELEASE" == "noble" ]]; then
-                        log_info "Setting Ubuntu default wallpapers for Noble."
+                    if [[ "$RELEASE" == "noble" || "$RELEASE" == "oracular" ]]; then
+                        log_info "Setting Ubuntu default wallpapers for Noble/Oracular."
                         WALLPAPER_LIGHT="file:///usr/share/backgrounds/warty-final-ubuntu.png"
                         WALLPAPER_DARK="file:///usr/share/backgrounds/ubuntu-wallpaper-d.png"
-                        # Check existence for Noble
+                        # Check existence for Noble/Oracular
                         if [ ! -f /usr/share/backgrounds/warty-final-ubuntu.png ]; then
-                            log_warn "Ubuntu light wallpaper not found for Noble, using fallback."
+                            log_warn "Ubuntu light wallpaper not found for Noble/Oracular, using fallback."
                             WALLPAPER_LIGHT=""
                         fi
                         if [ ! -f /usr/share/backgrounds/ubuntu-wallpaper-d.png ]; then
-                            log_warn "Ubuntu dark wallpaper not found for Noble, using fallback."
+                            log_warn "Ubuntu dark wallpaper not found for Noble/Oracular, using fallback."
                             WALLPAPER_DARK=""
                         fi
                     elif [[ "$RELEASE" == "bookworm" ]]; then
@@ -439,7 +439,7 @@ EOF
     PACKAGES_TO_REMOVE="" # Initialize variable, will be set based on release
 
     case "$RELEASE" in
-        noble | bookworm | plucky) # Apply the same removals for Noble, Bookworm, and Plucky
+        noble | oracular | bookworm | plucky) # apply the same removals for Noble/Oracular, Bookworm, and Plucky
             log_info "Targeting packages for removal in $RELEASE..."
             # List packages to remove specifically for these releases
             PACKAGES_TO_REMOVE="synaptic xarchiver mc"
