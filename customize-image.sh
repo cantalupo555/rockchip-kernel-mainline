@@ -173,6 +173,76 @@ Main() {
             fi
             # --- End Vivaldi Browser Install ---
 
+            # --- Install AppIndicator Extension (Manual - Noble/Bookworm/Plucky Desktop Only) ---
+            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "oracular" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
+                log_info "Attempting to install AppIndicator extension for $RELEASE Desktop..."
+
+                # Ensure unzip is installed (should be from package list above)
+                if ! command -v unzip &> /dev/null; then
+                    log_error "unzip command not found, but required for extension install. Stopping."
+                    exit 1
+                fi
+
+                local APPINDICATOR_EXT_UUID="appindicatorsupport@rgcjonas.gmail.com"
+                local APPINDICATOR_EXT_URL="" # URL will be set based on release
+                local APPINDICATOR_EXT_ZIP="/tmp/appindicator.zip"
+                local APPINDICATOR_EXT_DIR="/usr/share/gnome-shell/extensions/${APPINDICATOR_EXT_UUID}"
+
+                # Select URL based on Release (GNOME version)
+                if [[ "$RELEASE" == "noble" || "$RELEASE" == "oracular" ]]; then
+                    # v59 for GNOME 46/47 (Noble/Oracular)
+                    APPINDICATOR_EXT_URL="https://extensions.gnome.org/extension-data/appindicatorsupportrgcjonas.gmail.com.v59.shell-extension.zip"
+                    log_info "Selected AppIndicator v59 for Noble/Oracular (GNOME 46/47)."
+                elif [[ "$RELEASE" == "bookworm" ]]; then
+                    # v53 for GNOME 43 (Bookworm)
+                    APPINDICATOR_EXT_URL="https://extensions.gnome.org/extension-data/appindicatorsupportrgcjonas.gmail.com.v53.shell-extension.zip"
+                    log_info "Selected AppIndicator v53 for Bookworm (GNOME 43)."
+                elif [[ "$RELEASE" == "plucky" ]]; then
+                    log_info "AppIndicator not yet supported for GNOME 48 (Plucky)."
+                    continue
+                else
+                    # Should not happen due to outer if, but good practice
+                    log_error "Unsupported release '$RELEASE' for AppIndicator installation."
+                    exit 1
+                fi
+
+                log_info "Downloading AppIndicator from $APPINDICATOR_EXT_URL..."
+                if ! wget --no-verbose -O "$APPINDICATOR_EXT_ZIP" "$APPINDICATOR_EXT_URL"; then
+                    log_error "Failed to download AppIndicator extension from $APPINDICATOR_EXT_URL."
+                    rm -f "$APPINDICATOR_EXT_ZIP" # Clean up partial download
+                    exit 1 # Consider this fatal
+                fi
+
+                log_info "Creating extension directory: $APPINDICATOR_EXT_DIR"
+                if ! mkdir -p "$APPINDICATOR_EXT_DIR"; then
+                    log_error "Failed to create extension directory: $APPINDICATOR_EXT_DIR"
+                    rm -f "$APPINDICATOR_EXT_ZIP"
+                    exit 1
+                fi
+
+                log_info "Extracting AppIndicator to $APPINDICATOR_EXT_DIR..."
+                if ! unzip -oq "$APPINDICATOR_EXT_ZIP" -d "$APPINDICATOR_EXT_DIR"; then # Added -o to overwrite without prompt
+                    log_error "Failed to extract AppIndicator extension to $APPINDICATOR_EXT_DIR."
+                    rm -f "$APPINDICATOR_EXT_ZIP"
+                    rm -rf "$APPINDICATOR_EXT_DIR" # Clean up potentially broken extraction
+                    exit 1
+                fi
+
+                # --- Set Permissions ---
+                log_info "Setting correct permissions for $APPINDICATOR_EXT_DIR..."
+                if ! chmod -R a+rX "$APPINDICATOR_EXT_DIR"; then
+                    log_error "Failed to set permissions for $APPINDICATOR_EXT_DIR."
+                    # Consider adding 'exit 1' if permissions are critical
+                fi
+                # --- End Set Permissions ---
+
+                log_info "AppIndicator extension files installed successfully to $APPINDICATOR_EXT_DIR."
+                rm -f "$APPINDICATOR_EXT_ZIP" # Clean up downloaded zip
+
+                # Enabling happens below in the dconf section modification
+            fi
+            # --- End AppIndicator Install ---
+
             # --- Install Clipboard Indicator Extension (Manual - Noble/Bookworm/Plucky Desktop Only) ---
             if [[ ("$RELEASE" == "noble" || "$RELEASE" == "oracular" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
                 log_info "Attempting to install Clipboard Indicator extension for $RELEASE Desktop..."
@@ -190,9 +260,9 @@ Main() {
 
                 # Select URL based on Release (GNOME version)
                 if [[ "$RELEASE" == "noble" || "$RELEASE" == "oracular" ]]; then
-                    # v68 for GNOME 46 (Noble/Oracular)
+                    # v68 for GNOME 46/47 (Noble/Oracular)
                     CLIPBOARD_EXT_URL="https://extensions.gnome.org/extension-data/clipboard-indicatortudmotu.com.v68.shell-extension.zip"
-                    log_info "Selected Clipboard Indicator v68 for Noble/Oracular (GNOME 46)."
+                    log_info "Selected Clipboard Indicator v68 for Noble/Oracular (GNOME 46/47)."
                 elif [[ "$RELEASE" == "bookworm" ]]; then
                     # v47 for GNOME 43 (Bookworm)
                     CLIPBOARD_EXT_URL="https://extensions.gnome.org/extension-data/clipboard-indicatortudmotu.com.v47.shell-extension.zip"
@@ -261,9 +331,9 @@ Main() {
 
                 # Select URL based on Release (GNOME version)
                 if [[ "$RELEASE" == "noble" || "$RELEASE" == "oracular" ]]; then
-                    # v100 for GNOME 46 (Noble/Oracular)
+                    # v100 for GNOME 46/47 (Noble/Oracular)
                     DOCK_EXT_URL="https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v100.shell-extension.zip"
-                    log_info "Selected Dash to Dock v100 for Noble/Oracular (GNOME 46)."
+                    log_info "Selected Dash to Dock v100 for Noble/Oracular (GNOME 46/47)."
                 elif [[ "$RELEASE" == "bookworm" ]]; then
                     # v84 for GNOME 43 (Bookworm)
                     DOCK_EXT_URL="https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v84.shell-extension.zip"
@@ -378,7 +448,7 @@ favorite-apps=['org.gnome.Nautilus.desktop', 'vivaldi-stable.desktop', 'org.gnom
 
 # Enable extensions by default if they were installed
 # Ensure these UUIDs match the installed extensions
-enabled-extensions=['clipboard-indicator@tudmotu.com', 'dash-to-dock@micxgx.gmail.com', 'system-monitor@gnome-shell-extensions.gcampax.github.com', 'workspace-indicator@gnome-shell-extensions.gcampax.github.com']
+enabled-extensions=['appindicatorsupport@rgcjonas.gmail.com', 'clipboard-indicator@tudmotu.com', 'dash-to-dock@micxgx.gmail.com', 'system-monitor@gnome-shell-extensions.gcampax.github.com', 'workspace-indicator@gnome-shell-extensions.gcampax.github.com']
 
 [org/gnome/desktop/wm/preferences]
 button-layout='appmenu:minimize,maximize,close'
