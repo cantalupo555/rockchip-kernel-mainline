@@ -21,10 +21,10 @@ IMAGE_ZSTD_COMPRESSION_RATIO=9
 INSTALL_HEADERS="yes"
 KERNEL_CONFIGURE="no"
 BUILD_MINIMAL="no"
-KERNEL_BTF="yes" # Forcing BTF=yes as requested
+KERNEL_BTF="no" # Forcing BTF=yes as requested
 EXPERT="yes"
 PROGRESS_LOG_TO_FILE="yes" # Enable progress logging to file
-NO_HOST_RELEASE_CHECK="yes" # Skip host release check
+NO_HOST_RELEASE_CHECK="no" # Skip host release check
 
 # --- Global Variables ---
 SCRIPT_DIR=""
