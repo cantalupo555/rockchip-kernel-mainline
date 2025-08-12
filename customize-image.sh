@@ -21,6 +21,9 @@ log_error() {
 Main() {
     set -e # Exit immediately if a command fails
 
+    # Define the overlay directory path to be used for custom files.
+    OVERLAY_DIR="/tmp/overlay"
+
     log_info "--- Starting custom image customization ---"
     log_info "Board: $BOARD, Release: $RELEASE, Family: $LINUXFAMILY, Desktop: $BUILD_DESKTOP"
 
@@ -199,7 +202,7 @@ Main() {
                 rm -f "$FIREFOX_TAR"
 
                 log_info "Installing Firefox desktop shortcut..."
-                local DESKTOP_FILE_SRC="/tmp/overlay/firefox.desktop"
+                local DESKTOP_FILE_SRC="${OVERLAY_DIR}/firefox.desktop"
                 local DESKTOP_FILE_DEST="/usr/share/applications/firefox.desktop"
                 if [ -f "$DESKTOP_FILE_SRC" ]; then
                     mkdir -p "/usr/share/applications/"
@@ -603,7 +606,6 @@ EOF
 
     # --- Section to copy overlay configuration files...
     log_info "Copying overlay configuration files..."
-    OVERLAY_DIR="/tmp/overlay"
 
     # Check and copy armbian-zram-config to /etc/default/
     if [ -f "${OVERLAY_DIR}/armbian-zram-config" ]; then

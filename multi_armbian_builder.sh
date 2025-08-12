@@ -5,8 +5,8 @@
 # optimizing cleanup between builds.
 
 # Define the desired variations
-BOARDS=("orangepi5" "orangepi5-plus" "rock-5a" "rock-5b" "rock-5b-plus")
-RELEASES=("noble")
+BOARDS=("orangepi5" "orangepi5-plus" "orangepi5pro" "rock-5a" "rock-5b" "rock-5b-plus")
+RELEASES=("noble" "plucky")
 DESKTOPS=("gnome") # Only for the desktop section
 
 # Fixed base parameters for all builds (unless overridden)
@@ -21,7 +21,7 @@ IMAGE_ZSTD_COMPRESSION_RATIO=9
 INSTALL_HEADERS="yes"
 KERNEL_CONFIGURE="no"
 BUILD_MINIMAL="no"
-KERNEL_BTF="no" # Forcing BTF=yes as requested
+KERNEL_BTF="yes" # Forcing BTF=yes as requested
 EXPERT="yes"
 PROGRESS_LOG_TO_FILE="yes" # Enable progress logging to file
 NO_HOST_RELEASE_CHECK="no" # Skip host release check
@@ -167,6 +167,12 @@ copy_custom_config() {
     # Destination: Placed in userpatches/overlay to be copied directly to /etc/default/ in the image.
     local dest_zram_config="userpatches/overlay/armbian-zram-config"
 
+    # --- FIREFOX DESKTOP OVERLAY ---
+    # Source: Custom firefox.desktop file, located one level up.
+    local source_firefox_desktop="../firefox.desktop"
+    # Destination: Placed in userpatches/overlay to be copied to /usr/share/applications/ in the image.
+    local dest_firefox_desktop="userpatches/overlay/firefox.desktop"
+
     # --- KERNEL CONFIG (EDGE) ---
     # Source: Custom kernel config file for edge, located one level up.
     local source_kernel_conf_edge="../linux-rockchip-rk3588-edge.config"
@@ -232,6 +238,19 @@ copy_custom_config() {
         else
              # If source didn't exist, assume it's required and exit.
              log_msg "### FATAL: Required custom config '$source_zram_config' not found. Exiting. ###"
+             exit 1
+        fi
+    fi
+
+    # --- Copy the firefox.desktop file to overlay ---
+    if ! _copy_item "$source_firefox_desktop" "$dest_firefox_desktop"; then
+        # If _copy_item returned 1 (error), check if it was a real copy error or missing source
+        if [ -e "$source_firefox_desktop" ]; then # Use -e to check existence (file or dir)
+             log_msg "### FATAL: Error copying $source_firefox_desktop. Exiting. ###"
+             exit 1
+        else
+             # If source didn't exist, assume it's required and exit.
+             log_msg "### FATAL: Required custom desktop file '$source_firefox_desktop' not found. Exiting. ###"
              exit 1
         fi
     fi
