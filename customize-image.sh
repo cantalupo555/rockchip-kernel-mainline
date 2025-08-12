@@ -61,7 +61,7 @@ Main() {
             noble | oracular | plucky)
                 log_info "Targeting packages for installation in Ubuntu Desktop..."
                 # Add packages to install specifically for Ubuntu Desktop
-                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg net-tools bmon xfsprogs f2fs-tools vulkan-tools mesa-vulkan-drivers stress-ng cmake cpufrequtils lm-sensors zstd snapd gnome-software wireplumber pipewire pipewire-pulse"
+                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg net-tools bmon xfsprogs f2fs-tools vulkan-tools mesa-vulkan-drivers stress-ng cmake cpufrequtils lm-sensors zstd snapd gnome-software wireplumber pipewire pipewire-pulse libcanberra-gtk3-module"
                 ;;
             *)
                 # Default case for other releases not explicitly listed for Desktop
@@ -140,35 +140,84 @@ Main() {
             fi
             # --- End Flathub remote add ---
 
-            # --- Install Vivaldi Browser (Noble/Bookworm/Plucky Desktop Only) ---
-            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "oracular" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" ]]; then
-                log_info "Attempting to install Vivaldi Browser for $RELEASE Desktop..."
-                VIVALDI_URL="https://downloads.vivaldi.com/stable/vivaldi-stable_7.3.3635.11-1_arm64.deb"
-                VIVALDI_DEB="/tmp/vivaldi-stable_arm64.deb" # Use /tmp for the download
-
-                log_info "Downloading Vivaldi from $VIVALDI_URL..."
-                if ! wget --no-verbose -O "$VIVALDI_DEB" "$VIVALDI_URL"; then # Added --no-verbose
-                    log_error "Failed to download Vivaldi from $VIVALDI_URL."
-                    # Decide if this is fatal. Let's assume yes for now.
-                    exit 1
-                else
-                    log_info "Vivaldi downloaded successfully to $VIVALDI_DEB."
-
-                    log_info "Installing Vivaldi from $VIVALDI_DEB..."
-                    # Use apt-get install to handle dependencies automatically
-                    if ! apt-get install -y "$VIVALDI_DEB"; then
-                        log_error "Failed to install Vivaldi from $VIVALDI_DEB. Dependencies might be missing or broken."
-                        rm -f "$VIVALDI_DEB" # Clean up even on failure
-                        exit 1
-                    else
-                        log_info "Vivaldi installed successfully."
-                        rm -f "$VIVALDI_DEB" # Clean up after successful installation
-                    fi
-                fi
-            fi
+            # --- Install Vivaldi Browser (COMMENTED OUT) ---
+            # if [[ ("$RELEASE" == "noble" || "$RELEASE" == "oracular" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" ]]; then
+            #     log_info "Attempting to install Vivaldi Browser for $RELEASE Desktop..."
+            #     VIVALDI_URL="https://downloads.vivaldi.com/stable/vivaldi-stable_7.3.3635.11-1_arm64.deb"
+            #     VIVALDI_DEB="/tmp/vivaldi-stable_arm64.deb" # Use /tmp for the download
+            #
+            #     log_info "Downloading Vivaldi from $VIVALDI_URL..."
+            #     if ! wget --no-verbose -O "$VIVALDI_DEB" "$VIVALDI_URL"; then # Added --no-verbose
+            #         log_error "Failed to download Vivaldi from $VIVALDI_URL."
+            #         # Decide if this is fatal. Let's assume yes for now.
+            #         exit 1
+            #     else
+            #         log_info "Vivaldi downloaded successfully to $VIVALDI_DEB."
+            #
+            #         log_info "Installing Vivaldi from $VIVALDI_DEB..."
+            #         # Use apt-get install to handle dependencies automatically
+            #         if ! apt-get install -y "$VIVALDI_DEB"; then
+            #             log_error "Failed to install Vivaldi from $VIVALDI_DEB. Dependencies might be missing or broken."
+            #             rm -f "$VIVALDI_DEB" # Clean up even on failure
+            #             exit 1
+            #         else
+            #             log_info "Vivaldi installed successfully."
+            #             rm -f "$VIVALDI_DEB" # Clean up after successful installation
+            #         fi
+            #     fi
+            # fi
             # --- End Vivaldi Browser Install ---
 
-            # --- Install AppIndicator Extension (Manual - Noble/Bookworm/Plucky Desktop Only) ---
+            # --- Install Firefox Browser ---
+            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "oracular" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" ]]; then
+                log_info "Attempting to install Firefox Browser for $RELEASE Desktop..."
+                FIREFOX_URL="https://ftp.mozilla.org/pub/firefox/releases/142.0b1/linux-aarch64/en-US/firefox-142.0b1.tar.xz"
+                FIREFOX_TAR="/tmp/firefox.tar.xz"
+                
+                log_info "Downloading Firefox from $FIREFOX_URL..."
+                if ! wget --no-verbose -O "$FIREFOX_TAR" "$FIREFOX_URL"; then
+                    log_error "Failed to download Firefox from $FIREFOX_URL."
+                    exit 1
+                fi
+
+                log_info "Extracting Firefox..."
+                if ! tar -xJf "$FIREFOX_TAR" -C "/tmp/"; then
+                    log_error "Failed to extract Firefox archive."
+                    rm -f "$FIREFOX_TAR"
+                    exit 1
+                fi
+
+                log_info "Moving Firefox to /opt/..."
+                if ! mv /tmp/firefox /opt/; then
+                    log_error "Failed to move Firefox to /opt/."
+                    rm -f "$FIREFOX_TAR"
+                    rm -rf /tmp/firefox
+                    exit 1
+                fi
+
+                log_info "Cleaning up Firefox archive..."
+                rm -f "$FIREFOX_TAR"
+
+                log_info "Installing Firefox desktop shortcut..."
+                local DESKTOP_FILE_SRC="/tmp/overlay/firefox.desktop"
+                local DESKTOP_FILE_DEST="/usr/share/applications/firefox.desktop"
+                if [ -f "$DESKTOP_FILE_SRC" ]; then
+                    mkdir -p "/usr/share/applications/"
+                    if cp "$DESKTOP_FILE_SRC" "$DESKTOP_FILE_DEST"; then
+                        log_info "Firefox desktop file copied successfully."
+                        chmod 644 "$DESKTOP_FILE_DEST"
+                    else
+                        log_error "Failed to copy Firefox desktop file."
+                        exit 1
+                    fi
+                else
+                    log_warn "Firefox desktop file not found at $DESKTOP_FILE_SRC. Skipping shortcut installation."
+                fi
+                log_info "Firefox installed successfully."
+            fi
+            # --- End Firefox Browser Install ---
+
+            # --- Install AppIndicator Extension ---
             if [[ ("$RELEASE" == "noble" || "$RELEASE" == "oracular" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
                 log_info "Attempting to install AppIndicator extension for $RELEASE Desktop..."
 
@@ -238,7 +287,7 @@ Main() {
             fi
             # --- End AppIndicator Install ---
 
-            # --- Install Clipboard Indicator Extension (Manual - Noble/Bookworm/Plucky Desktop Only) ---
+            # --- Install Clipboard Indicator Extension ---
             if [[ ("$RELEASE" == "noble" || "$RELEASE" == "oracular" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
                 log_info "Attempting to install Clipboard Indicator extension for $RELEASE Desktop..."
 
@@ -309,7 +358,7 @@ Main() {
             fi
             # --- End Clipboard Indicator Install ---
 
-            # --- Install Dash to Dock Extension (Manual - Noble/Bookworm/Plucky Desktop Only) ---
+            # --- Install Dash to Dock Extension ---
             if [[ ("$RELEASE" == "noble" || "$RELEASE" == "oracular" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
                 log_info "Attempting to install Dash to Dock extension for $RELEASE Desktop..."
 
@@ -439,7 +488,7 @@ Main() {
                     # Note: system-monitor and workspace-indicator are part of gnome-shell-extensions package
                     cat << EOF > "$DCONF_FILE"
 [org/gnome/shell]
-favorite-apps=['org.gnome.Nautilus.desktop', 'vivaldi-stable.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Software.desktop']
+favorite-apps=['firefox.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Software.desktop']
 
 # Enable extensions by default if they were installed
 # Ensure these UUIDs match the installed extensions
