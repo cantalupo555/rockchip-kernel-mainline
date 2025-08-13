@@ -252,8 +252,8 @@ Main() {
                     APPINDICATOR_EXT_URL="https://extensions.gnome.org/extension-data/appindicatorsupportrgcjonas.gmail.com.v53.shell-extension.zip"
                     log_info "Selected AppIndicator v53 for Bookworm (GNOME 43)."
                 elif [[ "$RELEASE" == "plucky" ]]; then
-                    log_info "AppIndicator not yet supported for GNOME 48 (Plucky)."
-                    # Do not set APPINDICATOR_EXT_URL, so the download/install block is skipped
+                    APPINDICATOR_EXT_URL="https://extensions.gnome.org/extension-data/appindicatorsupportrgcjonas.gmail.com.v60.shell-extension.zip"
+                    log_info "Selected AppIndicator v60 for Plucky (GNOME 48)."
                 else
                     # Should not happen due to outer if, but good practice
                     log_error "Unsupported release '$RELEASE' for AppIndicator installation."
