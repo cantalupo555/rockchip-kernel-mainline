@@ -198,6 +198,13 @@ Main() {
                     exit 1
                 fi
 
+                log_info "Setting ownership for /opt/firefox..."
+                if ! chown -R 1000:1000 /opt/firefox; then
+                    log_warn "Failed to set ownership for /opt/firefox."
+                else
+                    log_info "Ownership of /opt/firefox set to 1000:1000."
+                fi
+
                 log_info "Cleaning up Firefox archive..."
                 rm -f "$FIREFOX_TAR"
 

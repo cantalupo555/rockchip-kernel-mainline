@@ -5,7 +5,7 @@
 # optimizing cleanup between builds.
 
 # Define the desired variations
-BOARDS=("orangepi5" "orangepi5-plus" "orangepi5pro" "rock-5a" "rock-5b" "rock-5b-plus")
+BOARDS=("orangepi5" "orangepi5-plus" "rock-5a" "rock-5b" "rock-5b-plus")
 RELEASES=("noble" "plucky")
 DESKTOPS=("gnome") # Only for the desktop section
 
