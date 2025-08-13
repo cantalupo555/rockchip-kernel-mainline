@@ -508,15 +508,34 @@ Main() {
                     mkdir -p "$DCONF_DIR"
 
                     log_info "Creating dconf override file: $DCONF_FILE"
+
+                    # --- Define Enabled Extensions based on Release ---
+                    local BASE_EXTENSIONS="'clipboard-indicator@tudmotu.com', 'dash-to-dock@micxgx.gmail.com', 'system-monitor@gnome-shell-extensions.gcampax.github.com', 'workspace-indicator@gnome-shell-extensions.gcampax.github.com'"
+                    local ENABLED_EXTENSIONS=""
+
+                    if [[ "$RELEASE" == "noble" || "$RELEASE" == "oracular" || "$RELEASE" == "plucky" ]]; then
+                        # Ubuntu provides its own indicator extension within the gnome-shell-extensions package
+                        log_info "Enabling Ubuntu AppIndicator extension."
+                        ENABLED_EXTENSIONS="'ubuntu-appindicators@ubuntu.com', ${BASE_EXTENSIONS}"
+                    elif [[ "$RELEASE" == "bookworm" ]]; then
+                        # Debian requires a separate package for the indicator extension (gnome-shell-extension-appindicator)
+                        log_info "Enabling AppIndicator Support extension for Debian."
+                        ENABLED_EXTENSIONS="'appindicatorsupport@rgcjonas.gmail.com', ${BASE_EXTENSIONS}"
+                    else
+                        # Fallback for other systems, don't add an indicator extension
+                        log_info "No specific indicator extension will be enabled for release '$RELEASE'."
+                        ENABLED_EXTENSIONS="${BASE_EXTENSIONS}"
+                    fi
+                    # --- End Define Enabled Extensions ---
+
                     # Use cat with heredoc to write the settings
-                    # Note: system-monitor and workspace-indicator are part of gnome-shell-extensions package
                     cat << EOF > "$DCONF_FILE"
 [org/gnome/shell]
 favorite-apps=['firefox.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Terminal.desktop', 'org.gnome.Software.desktop']
 
 # Enable extensions by default if they were installed
-# Ensure these UUIDs match the installed extensions
-enabled-extensions=['appindicatorsupport@rgcjonas.gmail.com', 'clipboard-indicator@tudmotu.com', 'dash-to-dock@micxgx.gmail.com', 'system-monitor@gnome-shell-extensions.gcampax.github.com', 'workspace-indicator@gnome-shell-extensions.gcampax.github.com']
+# The correct indicator extension is added dynamically based on the release
+enabled-extensions=[${ENABLED_EXTENSIONS}]
 
 [org/gnome/desktop/wm/preferences]
 button-layout='appmenu:minimize,maximize,close'
