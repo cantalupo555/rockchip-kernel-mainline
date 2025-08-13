@@ -253,45 +253,51 @@ Main() {
                     log_info "Selected AppIndicator v53 for Bookworm (GNOME 43)."
                 elif [[ "$RELEASE" == "plucky" ]]; then
                     log_info "AppIndicator not yet supported for GNOME 48 (Plucky)."
-                    continue
+                    # Do not set APPINDICATOR_EXT_URL, so the download/install block is skipped
                 else
                     # Should not happen due to outer if, but good practice
                     log_error "Unsupported release '$RELEASE' for AppIndicator installation."
                     exit 1
                 fi
 
-                log_info "Downloading AppIndicator from $APPINDICATOR_EXT_URL..."
-                if ! wget --no-verbose -O "$APPINDICATOR_EXT_ZIP" "$APPINDICATOR_EXT_URL"; then
-                    log_error "Failed to download AppIndicator extension from $APPINDICATOR_EXT_URL."
-                    rm -f "$APPINDICATOR_EXT_ZIP" # Clean up partial download
-                    exit 1 # Consider this fatal
-                fi
+                # --- Start of the new conditional block ---
+                if [[ -n "$APPINDICATOR_EXT_URL" ]]; then # Only attempt download if URL is set
+                    log_info "Downloading AppIndicator from $APPINDICATOR_EXT_URL..."
+                    if ! wget --no-verbose -O "$APPINDICATOR_EXT_ZIP" "$APPINDICATOR_EXT_URL"; then
+                        log_error "Failed to download AppIndicator extension from $APPINDICATOR_EXT_URL."
+                        rm -f "$APPINDICATOR_EXT_ZIP" # Clean up partial download
+                        exit 1 # Consider this fatal
+                    fi
 
-                log_info "Creating extension directory: $APPINDICATOR_EXT_DIR"
-                if ! mkdir -p "$APPINDICATOR_EXT_DIR"; then
-                    log_error "Failed to create extension directory: $APPINDICATOR_EXT_DIR"
-                    rm -f "$APPINDICATOR_EXT_ZIP"
-                    exit 1
-                fi
+                    log_info "Creating extension directory: $APPINDICATOR_EXT_DIR"
+                    if ! mkdir -p "$APPINDICATOR_EXT_DIR"; then
+                        log_error "Failed to create extension directory: $APPINDICATOR_EXT_DIR"
+                        rm -f "$APPINDICATOR_EXT_ZIP"
+                        exit 1
+                    fi
 
-                log_info "Extracting AppIndicator to $APPINDICATOR_EXT_DIR..."
-                if ! unzip -oq "$APPINDICATOR_EXT_ZIP" -d "$APPINDICATOR_EXT_DIR"; then # Added -o to overwrite without prompt
-                    log_error "Failed to extract AppIndicator extension to $APPINDICATOR_EXT_DIR."
-                    rm -f "$APPINDICATOR_EXT_ZIP"
-                    rm -rf "$APPINDICATOR_EXT_DIR" # Clean up potentially broken extraction
-                    exit 1
-                fi
+                    log_info "Extracting AppIndicator to $APPINDICATOR_EXT_DIR..."
+                    if ! unzip -oq "$APPINDICATOR_EXT_ZIP" -d "$APPINDICATOR_EXT_DIR"; then # Added -o to overwrite without prompt
+                        log_error "Failed to extract AppIndicator extension to $APPINDICATOR_EXT_DIR."
+                        rm -f "$APPINDICATOR_EXT_ZIP"
+                        rm -rf "$APPINDICATOR_EXT_DIR" # Clean up potentially broken extraction
+                        exit 1
+                    fi
 
-                # --- Set Permissions ---
-                log_info "Setting correct permissions for $APPINDICATOR_EXT_DIR..."
-                if ! chmod -R a+rX "$APPINDICATOR_EXT_DIR"; then
-                    log_error "Failed to set permissions for $APPINDICATOR_EXT_DIR."
-                    # Consider adding 'exit 1' if permissions are critical
-                fi
-                # --- End Set Permissions ---
+                    # --- Set Permissions ---
+                    log_info "Setting correct permissions for $APPINDICATOR_EXT_DIR..."
+                    if ! chmod -R a+rX "$APPINDICATOR_EXT_DIR"; then
+                        log_error "Failed to set permissions for $APPINDICATOR_EXT_DIR."
+                        # Consider adding 'exit 1' if permissions are critical
+                    fi
+                    # --- End Set Permissions ---
 
-                log_info "AppIndicator extension files installed successfully to $APPINDICATOR_EXT_DIR."
-                rm -f "$APPINDICATOR_EXT_ZIP" # Clean up downloaded zip
+                    log_info "AppIndicator extension files installed successfully to $APPINDICATOR_EXT_DIR."
+                    rm -f "$APPINDICATOR_EXT_ZIP" # Clean up downloaded zip
+                else
+                    log_info "Skipping AppIndicator download and installation for $RELEASE."
+                fi
+                # --- End of the new conditional block ---
 
                 # Enabling happens below in the dconf section modification
             fi
@@ -331,38 +337,42 @@ Main() {
                     exit 1
                 fi
 
-                log_info "Downloading Clipboard Indicator from $CLIPBOARD_EXT_URL..."
-                if ! wget --no-verbose -O "$CLIPBOARD_EXT_ZIP" "$CLIPBOARD_EXT_URL"; then
-                    log_error "Failed to download Clipboard Indicator extension from $CLIPBOARD_EXT_URL."
-                    rm -f "$CLIPBOARD_EXT_ZIP" # Clean up partial download
-                    exit 1 # Consider this fatal
-                fi
+                if [[ -n "$CLIPBOARD_EXT_URL" ]]; then # Only attempt download if URL is set
+                    log_info "Downloading Clipboard Indicator from $CLIPBOARD_EXT_URL..."
+                    if ! wget --no-verbose -O "$CLIPBOARD_EXT_ZIP" "$CLIPBOARD_EXT_URL"; then
+                        log_error "Failed to download Clipboard Indicator extension from $CLIPBOARD_EXT_URL."
+                        rm -f "$CLIPBOARD_EXT_ZIP" # Clean up partial download
+                        exit 1 # Consider this fatal
+                    fi
 
-                log_info "Creating extension directory: $CLIPBOARD_EXT_DIR"
-                if ! mkdir -p "$CLIPBOARD_EXT_DIR"; then
-                    log_error "Failed to create extension directory: $CLIPBOARD_EXT_DIR"
-                    rm -f "$CLIPBOARD_EXT_ZIP"
-                    exit 1
-                fi
+                    log_info "Creating extension directory: $CLIPBOARD_EXT_DIR"
+                    if ! mkdir -p "$CLIPBOARD_EXT_DIR"; then
+                        log_error "Failed to create extension directory: $CLIPBOARD_EXT_DIR"
+                        rm -f "$CLIPBOARD_EXT_ZIP"
+                        exit 1
+                    fi
 
-                log_info "Extracting Clipboard Indicator to $CLIPBOARD_EXT_DIR..."
-                if ! unzip -oq "$CLIPBOARD_EXT_ZIP" -d "$CLIPBOARD_EXT_DIR"; then # Added -o to overwrite without prompt
-                    log_error "Failed to extract Clipboard Indicator extension to $CLIPBOARD_EXT_DIR."
-                    rm -f "$CLIPBOARD_EXT_ZIP"
-                    rm -rf "$CLIPBOARD_EXT_DIR" # Clean up potentially broken extraction
-                    exit 1
-                fi
+                    log_info "Extracting Clipboard Indicator to $CLIPBOARD_EXT_DIR..."
+                    if ! unzip -oq "$CLIPBOARD_EXT_ZIP" -d "$CLIPBOARD_EXT_DIR"; then # Added -o to overwrite without prompt
+                        log_error "Failed to extract Clipboard Indicator extension to $CLIPBOARD_EXT_DIR."
+                        rm -f "$CLIPBOARD_EXT_ZIP"
+                        rm -rf "$CLIPBOARD_EXT_DIR" # Clean up potentially broken extraction
+                        exit 1
+                    fi
 
-                # --- Set Permissions ---
-                log_info "Setting correct permissions for $CLIPBOARD_EXT_DIR..."
-                if ! chmod -R a+rX "$CLIPBOARD_EXT_DIR"; then
-                    log_error "Failed to set permissions for $CLIPBOARD_EXT_DIR."
-                    # Consider adding 'exit 1' if permissions are critical
-                fi
-                # --- End Set Permissions ---
+                    # --- Set Permissions ---
+                    log_info "Setting correct permissions for $CLIPBOARD_EXT_DIR..."
+                    if ! chmod -R a+rX "$CLIPBOARD_EXT_DIR"; then
+                        log_error "Failed to set permissions for $CLIPBOARD_EXT_DIR."
+                        # Consider adding 'exit 1' if permissions are critical
+                    fi
+                    # --- End Set Permissions ---
 
-                log_info "Clipboard Indicator extension files installed successfully to $CLIPBOARD_EXT_DIR."
-                rm -f "$CLIPBOARD_EXT_ZIP" # Clean up downloaded zip
+                    log_info "Clipboard Indicator extension files installed successfully to $CLIPBOARD_EXT_DIR."
+                    rm -f "$CLIPBOARD_EXT_ZIP" # Clean up downloaded zip
+                else
+                    log_info "Skipping Clipboard Indicator download and installation for $RELEASE."
+                fi
 
                 # Enabling happens below in the dconf section modification
             fi
@@ -379,7 +389,7 @@ Main() {
                 fi
 
                 local DOCK_EXT_UUID="dash-to-dock@micxgx.gmail.com"
-                local DOCK_EXT_URL=""
+                local DOCK_EXT_URL="" # URL will be set based on release
                 local DOCK_EXT_ZIP="/tmp/dash-to-dock.zip"
                 local DOCK_EXT_DIR="/usr/share/gnome-shell/extensions/${DOCK_EXT_UUID}"
 
@@ -402,40 +412,44 @@ Main() {
                     exit 1
                 fi
 
-                log_info "Downloading Dash to Dock extension from $DOCK_EXT_URL..."
-                if ! wget --no-verbose -O "$DOCK_EXT_ZIP" "$DOCK_EXT_URL"; then
-                    log_error "Failed to download Dash to Dock extension from $DOCK_EXT_URL."
-                    rm -f "$DOCK_EXT_ZIP" # Clean up partial download
-                    exit 1 # Consider this fatal
-                fi
+                if [[ -n "$DOCK_EXT_URL" ]]; then # Only attempt download if URL is set
+                    log_info "Downloading Dash to Dock extension from $DOCK_EXT_URL..."
+                    if ! wget --no-verbose -O "$DOCK_EXT_ZIP" "$DOCK_EXT_URL"; then
+                        log_error "Failed to download Dash to Dock extension from $DOCK_EXT_URL."
+                        rm -f "$DOCK_EXT_ZIP" # Clean up partial download
+                        exit 1 # Consider this fatal
+                    fi
 
-                log_info "Creating extension directory: $DOCK_EXT_DIR"
-                # Use -p to create parent directories if needed, although /usr/share/gnome-shell/extensions should exist
-                if ! mkdir -p "$DOCK_EXT_DIR"; then
-                    log_error "Failed to create extension directory: $DOCK_EXT_DIR"
-                    rm -f "$DOCK_EXT_ZIP"
-                    exit 1
-                fi
+                    log_info "Creating extension directory: $DOCK_EXT_DIR"
+                    # Use -p to create parent directories if needed, although /usr/share/gnome-shell/extensions should exist
+                    if ! mkdir -p "$DOCK_EXT_DIR"; then
+                        log_error "Failed to create extension directory: $DOCK_EXT_DIR"
+                        rm -f "$DOCK_EXT_ZIP"
+                        exit 1
+                    fi
 
-                log_info "Extracting Dash to Dock extension to $DOCK_EXT_DIR..."
-                # Use -o to overwrite files without prompting, useful if re-running
-                if ! unzip -oq "$DOCK_EXT_ZIP" -d "$DOCK_EXT_DIR"; then
-                    log_error "Failed to extract Dash to Dock extension to $DOCK_EXT_DIR."
-                    rm -f "$DOCK_EXT_ZIP"
-                    rm -rf "$DOCK_EXT_DIR" # Clean up potentially broken extraction
-                    exit 1
-                fi
+                    log_info "Extracting Dash to Dock extension to $DOCK_EXT_DIR..."
+                    # Use -o to overwrite files without prompting, useful if re-running
+                    if ! unzip -oq "$DOCK_EXT_ZIP" -d "$DOCK_EXT_DIR"; then
+                        log_error "Failed to extract Dash to Dock extension to $DOCK_EXT_DIR."
+                        rm -f "$DOCK_EXT_ZIP"
+                        rm -rf "$DOCK_EXT_DIR" # Clean up potentially broken extraction
+                        exit 1
+                    fi
 
-                # --- Set Permissions ---
-                log_info "Setting correct permissions for $DOCK_EXT_DIR..."
-                if ! chmod -R a+rX "$DOCK_EXT_DIR"; then # Give read permission to all, and execute permission to all for directories/already executable files
-                    log_error "Failed to set permissions for $DOCK_EXT_DIR."
-                    # You might want to add 'exit 1' here if permissions are critical
-                fi
-                # --- End Set Permissions ---
+                    # --- Set Permissions ---
+                    log_info "Setting correct permissions for $DOCK_EXT_DIR..."
+                    if ! chmod -R a+rX "$DOCK_EXT_DIR"; then # Give read permission to all, and execute permission to all for directories/already executable files
+                        log_error "Failed to set permissions for $DOCK_EXT_DIR."
+                        # You might want to add 'exit 1' here if permissions are critical
+                    fi
+                    # --- End Set Permissions ---
 
-                log_info "Dash to Dock extension files installed successfully to $DOCK_EXT_DIR."
-                rm -f "$DOCK_EXT_ZIP" # Clean up downloaded zip
+                    log_info "Dash to Dock extension files installed successfully to $DOCK_EXT_DIR."
+                    rm -f "$DOCK_EXT_ZIP" # Clean up downloaded zip
+                else
+                    log_info "Skipping Dash to Dock download and installation for $RELEASE."
+                fi
 
                 # Enabling happens below in the dconf section modification
             fi
