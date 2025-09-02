@@ -174,7 +174,7 @@ Main() {
             # --- Install Firefox Browser ---
             if [[ ("$RELEASE" == "noble" || "$RELEASE" == "oracular" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" ]]; then
                 log_info "Attempting to install Firefox Browser for $RELEASE Desktop..."
-                FIREFOX_URL="https://ftp.mozilla.org/pub/firefox/releases/142.0b1/linux-aarch64/en-US/firefox-142.0b1.tar.xz"
+                FIREFOX_URL="https://ftp.mozilla.org/pub/firefox/releases/143.0b1/linux-aarch64/en-US/firefox-143.0b1.tar.xz"
                 FIREFOX_TAR="/tmp/firefox.tar.xz"
                 
                 log_info "Downloading Firefox from $FIREFOX_URL..."
@@ -586,7 +586,7 @@ EOF
         noble | oracular | bookworm | plucky) # apply the same removals for Noble/Oracular, Bookworm, and Plucky
             log_info "Targeting packages for removal in $RELEASE..."
             # List packages to remove specifically for these releases
-            PACKAGES_TO_REMOVE="synaptic xarchiver mc"
+            PACKAGES_TO_REMOVE="synaptic xarchiver mc openssh-server"
             ;;
         *)
             # Default case for other releases not explicitly listed
