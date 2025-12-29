@@ -59,7 +59,7 @@ Main() {
             noble | questing)
                 log_info "Targeting packages for installation in Ubuntu Desktop..."
                 # Add packages to install specifically for Ubuntu Desktop (Noble 24.04 / Questing 25.10)
-                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg net-tools bmon xfsprogs f2fs-tools vulkan-tools mesa-vulkan-drivers stress-ng cmake cpufrequtils lm-sensors zstd snapd gnome-software wireplumber pipewire pipewire-pulse libcanberra-gtk3-module"
+                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc xdg-utils fonts-liberation yelp gnome-font-viewer gparted ffmpeg net-tools bmon xfsprogs f2fs-tools vulkan-tools mesa-vulkan-drivers cpufrequtils lm-sensors zstd snapd gnome-software wireplumber pipewire pipewire-pulse libcanberra-gtk3-module"
                 ;;
             *)
                 # Default case for other releases not explicitly listed for Desktop
@@ -109,27 +109,6 @@ Main() {
                            log_warn "Failed to list Flatpak remotes."
                        fi
                        # --- End Verification Step ---
-
-                       # --- Install Firefox via Flatpak (COMMENTED OUT) ---
-                       # log_info "Attempting to install Firefox via Flatpak..."
-                       # # Explicitly set TMPDIR in case the default location lacks O_TMPFILE support
-                       # # /var/tmp is often used, let's try explicitly setting it first.
-                       # export TMPDIR="/var/tmp"
-                       # log_info "Using TMPDIR=$TMPDIR for flatpak install."
-                       # # Use -y or --noninteractive to avoid prompts during build
-                       # if ! flatpak install -y --noninteractive flathub org.mozilla.firefox; then
-                       #     log_warn "Failed to install Firefox via Flatpak (TMPDIR=$TMPDIR). Check network or Flathub status, or filesystem support for O_TMPFILE."
-                       #     # If /var/tmp didn't work, maybe try /tmp next time:
-                       #     # log_warn "Consider trying export TMPDIR=/tmp instead."
-                       #
-                       #     # Decide if this is critical (exit 1) or just a warning.
-                       #     # exit 1
-                       # else
-                       #     log_info "Firefox successfully installed via Flatpak."
-                       # fi
-                       # Clean up environment variable if desired (optional)
-                       # unset TMPDIR
-                       # --- End Firefox Flatpak Install ---
 
                    fi
                 else
