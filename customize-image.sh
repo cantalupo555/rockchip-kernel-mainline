@@ -56,14 +56,9 @@ Main() {
     if [ "$BUILD_DESKTOP" = "yes" ]; then
         log_info "Checking for release-specific packages to install (Desktop)..."
         case "$RELEASE" in
-            bookworm)
-                log_info "Targeting packages for installation in Bookworm Desktop..."
-                # Add packages to install specifically for Bookworm Desktop
-                PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg net-tools bmon xfsprogs f2fs-tools vulkan-tools mesa-vulkan-drivers stress-ng cmake cpufrequtils lm-sensors zstd snapd gnome-software wireplumber pipewire pipewire-pulse"
-                ;;
-            noble | oracular | plucky)
+            noble | questing)
                 log_info "Targeting packages for installation in Ubuntu Desktop..."
-                # Add packages to install specifically for Ubuntu Desktop
+                # Add packages to install specifically for Ubuntu Desktop (Noble 24.04 / Questing 25.10)
                 PACKAGES_TO_INSTALL="flatpak gnome-software-plugin-flatpak gnome-tweaks gnome-shell-extensions gnome-shell-extension-manager chrome-gnome-shell gnome-clocks gnome-calendar gnome-calculator gedit eog evince vlc mplayer xdg-utils fonts-liberation evolution yelp font-manager gnome-font-viewer gparted ffmpeg net-tools bmon xfsprogs f2fs-tools vulkan-tools mesa-vulkan-drivers stress-ng cmake cpufrequtils lm-sensors zstd snapd gnome-software wireplumber pipewire pipewire-pulse libcanberra-gtk3-module"
                 ;;
             *)
@@ -98,7 +93,7 @@ Main() {
 
             # --- Add Flathub remote specifically after installing flatpak packages ---
             # Check if flatpak was installed and if we are on Noble, Bookworm or Plucky Desktop
-            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "oracular" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *flatpak* ]]; then
+            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "questing") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *flatpak* ]]; then
                 log_info "Adding Flathub repository for $RELEASE Desktop..."
                 # Ensure flatpak command is available before running
                 if command -v flatpak &> /dev/null; then
@@ -172,7 +167,7 @@ Main() {
             # --- End Vivaldi Browser Install ---
 
             # --- Install Firefox Browser ---
-            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "oracular" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" ]]; then
+            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "questing") && "$BUILD_DESKTOP" == "yes" ]]; then
                 log_info "Attempting to install Firefox Browser for $RELEASE Desktop..."
                 FIREFOX_URL="https://ftp.mozilla.org/pub/firefox/releases/143.0b1/linux-aarch64/en-US/firefox-143.0b1.tar.xz"
                 FIREFOX_TAR="/tmp/firefox.tar.xz"
@@ -228,7 +223,7 @@ Main() {
             # --- End Firefox Browser Install ---
 
             # --- Install AppIndicator Extension ---
-            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "oracular" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
+            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "questing") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
                 log_info "Attempting to install AppIndicator extension for $RELEASE Desktop..."
 
                 # Ensure unzip is installed (should be from package list above)
@@ -243,17 +238,14 @@ Main() {
                 local APPINDICATOR_EXT_DIR="/usr/share/gnome-shell/extensions/${APPINDICATOR_EXT_UUID}"
 
                 # Select URL based on Release (GNOME version)
-                if [[ "$RELEASE" == "noble" || "$RELEASE" == "oracular" ]]; then
-                    # v59 for GNOME 46/47 (Noble/Oracular)
+                if [[ "$RELEASE" == "noble" ]]; then
+                    # v59 for GNOME 46 (Noble)
                     APPINDICATOR_EXT_URL="https://extensions.gnome.org/extension-data/appindicatorsupportrgcjonas.gmail.com.v59.shell-extension.zip"
-                    log_info "Selected AppIndicator v59 for Noble/Oracular (GNOME 46/47)."
-                elif [[ "$RELEASE" == "bookworm" ]]; then
-                    # v53 for GNOME 43 (Bookworm)
-                    APPINDICATOR_EXT_URL="https://extensions.gnome.org/extension-data/appindicatorsupportrgcjonas.gmail.com.v53.shell-extension.zip"
-                    log_info "Selected AppIndicator v53 for Bookworm (GNOME 43)."
-                elif [[ "$RELEASE" == "plucky" ]]; then
-                    APPINDICATOR_EXT_URL="https://extensions.gnome.org/extension-data/appindicatorsupportrgcjonas.gmail.com.v60.shell-extension.zip"
-                    log_info "Selected AppIndicator v60 for Plucky (GNOME 48)."
+                    log_info "Selected AppIndicator v59 for Noble (GNOME 46)."
+                elif [[ "$RELEASE" == "questing" ]]; then
+                    # v61 for GNOME 49 (Questing)
+                    APPINDICATOR_EXT_URL="https://extensions.gnome.org/extension-data/appindicatorsupportrgcjonas.gmail.com.v61.shell-extension.zip"
+                    log_info "Selected AppIndicator v61 for Questing (GNOME 49)."
                 else
                     # Should not happen due to outer if, but good practice
                     log_error "Unsupported release '$RELEASE' for AppIndicator installation."
@@ -304,7 +296,7 @@ Main() {
             # --- End AppIndicator Install ---
 
             # --- Install Clipboard Indicator Extension ---
-            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "oracular" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
+            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "questing") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
                 log_info "Attempting to install Clipboard Indicator extension for $RELEASE Desktop..."
 
                 # Ensure unzip is installed (should be from package list above)
@@ -319,18 +311,14 @@ Main() {
                 local CLIPBOARD_EXT_DIR="/usr/share/gnome-shell/extensions/${CLIPBOARD_EXT_UUID}"
 
                 # Select URL based on Release (GNOME version)
-                if [[ "$RELEASE" == "noble" || "$RELEASE" == "oracular" ]]; then
-                    # v68 for GNOME 46/47 (Noble/Oracular)
+                if [[ "$RELEASE" == "noble" ]]; then
+                    # v68 for GNOME 46 (Noble)
                     CLIPBOARD_EXT_URL="https://extensions.gnome.org/extension-data/clipboard-indicatortudmotu.com.v68.shell-extension.zip"
-                    log_info "Selected Clipboard Indicator v68 for Noble/Oracular (GNOME 46/47)."
-                elif [[ "$RELEASE" == "bookworm" ]]; then
-                    # v47 for GNOME 43 (Bookworm)
-                    CLIPBOARD_EXT_URL="https://extensions.gnome.org/extension-data/clipboard-indicatortudmotu.com.v47.shell-extension.zip"
-                    log_info "Selected Clipboard Indicator v47 for Bookworm (GNOME 43)."
-                elif [[ "$RELEASE" == "plucky" ]]; then
-                    # v68 for GNOME 48 (Plucky)
-                    CLIPBOARD_EXT_URL="https://extensions.gnome.org/extension-data/clipboard-indicatortudmotu.com.v68.shell-extension.zip"
-                    log_info "Selected Clipboard Indicator v68 (PLACEHOLDER) for Plucky (GNOME 48)."
+                    log_info "Selected Clipboard Indicator v68 for Noble (GNOME 46)."
+                elif [[ "$RELEASE" == "questing" ]]; then
+                    # v69 for GNOME 49 (Questing)
+                    CLIPBOARD_EXT_URL="https://extensions.gnome.org/extension-data/clipboard-indicatortudmotu.com.v69.shell-extension.zip"
+                    log_info "Selected Clipboard Indicator v69 for Questing (GNOME 49)."
                 else
                     # Should not happen due to outer if, but good practice
                     log_error "Unsupported release '$RELEASE' for Clipboard Indicator installation."
@@ -379,7 +367,7 @@ Main() {
             # --- End Clipboard Indicator Install ---
 
             # --- Install Dash to Dock Extension ---
-            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "oracular" || "$RELEASE" == "bookworm" || "$RELEASE" == "plucky") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
+            if [[ ("$RELEASE" == "noble" || "$RELEASE" == "questing") && "$BUILD_DESKTOP" == "yes" && "$PACKAGES_TO_INSTALL" == *gnome-shell* ]]; then
                 log_info "Attempting to install Dash to Dock extension for $RELEASE Desktop..."
 
                 # Ensure unzip is installed
@@ -394,18 +382,14 @@ Main() {
                 local DOCK_EXT_DIR="/usr/share/gnome-shell/extensions/${DOCK_EXT_UUID}"
 
                 # Select URL based on Release (GNOME version)
-                if [[ "$RELEASE" == "noble" || "$RELEASE" == "oracular" ]]; then
-                    # v100 for GNOME 46/47 (Noble/Oracular)
+                if [[ "$RELEASE" == "noble" ]]; then
+                    # v100 for GNOME 46 (Noble)
                     DOCK_EXT_URL="https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v100.shell-extension.zip"
-                    log_info "Selected Dash to Dock v100 for Noble/Oracular (GNOME 46/47)."
-                elif [[ "$RELEASE" == "bookworm" ]]; then
-                    # v84 for GNOME 43 (Bookworm)
-                    DOCK_EXT_URL="https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v84.shell-extension.zip"
-                    log_info "Selected Dash to Dock v84 for Bookworm (GNOME 43)."
-                elif [[ "$RELEASE" == "plucky" ]]; then
-                    # v100 for GNOME 48 (Plucky)
-                    DOCK_EXT_URL="https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v100.shell-extension.zip"
-                    log_info "Selected Dash to Dock v100 (PLACEHOLDER) for Plucky (GNOME 48)."
+                    log_info "Selected Dash to Dock v100 for Noble (GNOME 46)."
+                elif [[ "$RELEASE" == "questing" ]]; then
+                    # v102 for GNOME 49 (Questing)
+                    DOCK_EXT_URL="https://extensions.gnome.org/extension-data/dash-to-dockmicxgx.gmail.com.v102.shell-extension.zip"
+                    log_info "Selected Dash to Dock v102 for Questing (GNOME 49)."
                 else
                     # Should not happen due to outer if, but good practice
                     log_error "Unsupported release '$RELEASE' for Dash to Dock installation."
@@ -471,30 +455,17 @@ Main() {
                     local WALLPAPER_DARK=""
 
                     # --- Define Wallpaper Paths based on Release ---
-                    if [[ "$RELEASE" == "noble" || "$RELEASE" == "oracular" || "$RELEASE" == "plucky" ]]; then
-                        log_info "Setting Ubuntu default wallpapers for Noble/Oracular/Plucky."
+                    if [[ "$RELEASE" == "noble" || "$RELEASE" == "questing" ]]; then
+                        log_info "Setting Ubuntu default wallpapers for $RELEASE."
                         WALLPAPER_LIGHT="file:///usr/share/backgrounds/warty-final-ubuntu.png"
                         WALLPAPER_DARK="file:///usr/share/backgrounds/ubuntu-wallpaper-d.png"
-                        # Check existence for Noble/Oracular/Plucky
+                        # Check existence
                         if [ ! -f /usr/share/backgrounds/warty-final-ubuntu.png ]; then
-                            log_warn "Ubuntu light wallpaper not found for Noble/Oracular/Plucky, using fallback."
+                            log_warn "Ubuntu light wallpaper not found for $RELEASE, using fallback."
                             WALLPAPER_LIGHT=""
                         fi
                         if [ ! -f /usr/share/backgrounds/ubuntu-wallpaper-d.png ]; then
-                            log_warn "Ubuntu dark wallpaper not found for Noble/Oracular/Plucky, using fallback."
-                            WALLPAPER_DARK=""
-                        fi
-                    elif [[ "$RELEASE" == "bookworm" ]]; then
-                        log_info "Setting Debian default wallpaper for Bookworm."
-                        # Debian 12 Emerald theme wallpaper (adjust path/resolution if needed)
-                        local DEBIAN_WALLPAPER_PATH="/usr/share/desktop-base/emerald-theme/wallpaper/contents/images/1920x1080.png"
-                        if [ -f "$DEBIAN_WALLPAPER_PATH" ]; then
-                            WALLPAPER_LIGHT="file://${DEBIAN_WALLPAPER_PATH}"
-                            # Use the same for dark theme, as Debian doesn't have a distinct default dark one usually
-                            WALLPAPER_DARK="file://${DEBIAN_WALLPAPER_PATH}"
-                        else
-                            log_warn "Debian default wallpaper '$DEBIAN_WALLPAPER_PATH' not found for Bookworm, using fallback."
-                            WALLPAPER_LIGHT=""
+                            log_warn "Ubuntu dark wallpaper not found for $RELEASE, using fallback."
                             WALLPAPER_DARK=""
                         fi
                     else
@@ -513,14 +484,10 @@ Main() {
                     local BASE_EXTENSIONS="'clipboard-indicator@tudmotu.com', 'dash-to-dock@micxgx.gmail.com', 'system-monitor@gnome-shell-extensions.gcampax.github.com', 'workspace-indicator@gnome-shell-extensions.gcampax.github.com'"
                     local ENABLED_EXTENSIONS=""
 
-                    if [[ "$RELEASE" == "noble" || "$RELEASE" == "oracular" || "$RELEASE" == "plucky" ]]; then
+                    if [[ "$RELEASE" == "noble" || "$RELEASE" == "questing" ]]; then
                         # Ubuntu provides its own indicator extension within the gnome-shell-extensions package
                         log_info "Enabling Ubuntu AppIndicator extension."
                         ENABLED_EXTENSIONS="'ubuntu-appindicators@ubuntu.com', ${BASE_EXTENSIONS}"
-                    elif [[ "$RELEASE" == "bookworm" ]]; then
-                        # Debian requires a separate package for the indicator extension (gnome-shell-extension-appindicator)
-                        log_info "Enabling AppIndicator Support extension for Debian."
-                        ENABLED_EXTENSIONS="'appindicatorsupport@rgcjonas.gmail.com', ${BASE_EXTENSIONS}"
                     else
                         # Fallback for other systems, don't add an indicator extension
                         log_info "No specific indicator extension will be enabled for release '$RELEASE'."
@@ -583,9 +550,9 @@ EOF
     PACKAGES_TO_REMOVE="" # Initialize variable, will be set based on release
 
     case "$RELEASE" in
-        noble | oracular | bookworm | plucky) # apply the same removals for Noble/Oracular, Bookworm, and Plucky
+        noble | questing)
             log_info "Targeting packages for removal in $RELEASE..."
-            # List packages to remove specifically for these releases
+            # List packages to remove specifically for Ubuntu releases
             PACKAGES_TO_REMOVE="synaptic xarchiver mc openssh-server"
             ;;
         *)
