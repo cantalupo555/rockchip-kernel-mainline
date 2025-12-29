@@ -138,38 +138,38 @@ copy_custom_config() {
     log_msg "Copying custom configuration files and scripts..."
 
     # --- ROCKCHIP FAMILY CONFIG ---
-    # Source: Custom config file for the RK3588 family, located one level up from SCRIPT_DIR.
-    local source_conf_rk="../rockchip-rk3588.conf"
+    # Source: Custom config file for the RK3588 family.
+    local source_conf_rk="../configs/rockchip-rk3588.conf"
     # Destination: Overwrites the default family config within the build framework.
     local dest_conf_rk="config/sources/families/rockchip-rk3588.conf"
 
     # --- COMPRESS/CHECKSUM SCRIPT ---
-    # Source: Custom script for image compression/checksum, located one level up.
-    local source_script_cs="../compress-checksum.sh"
+    # Source: Custom script for image compression/checksum.
+    local source_script_cs="../scripts/compress-checksum.sh"
     # Destination: Overwrites the default script within the build framework's library functions.
     local dest_script_cs="lib/functions/image/compress-checksum.sh"
 
     # --- CUSTOMIZE SCRIPT ---
-    # Source is the file one level up
-    local source_customize_script="../customize-image.sh"
+    # Source: Custom script for image customization.
+    local source_customize_script="../scripts/customize-image.sh"
     # Destination: Placed in userpatches to be executed during image customization.
     local dest_customize_script="userpatches/customize-image.sh"
 
     # --- DOCKER CONFIG ---
-    # Source: Custom configuration for Docker build flags, located one level up.
-    local source_docker_conf="../config-docker.conf"
+    # Source: Custom configuration for Docker build flags.
+    local source_docker_conf="../configs/config-docker.conf"
     # Destination: Placed in userpatches to be sourced by the build framework when using Docker.
     local dest_docker_conf="userpatches/config-docker.conf"
 
     # --- ZRAM CONFIG OVERLAY ---
-    # Source: Custom armbian-zram-config file, located one level up.
-    local source_zram_config="../armbian-zram-config"
+    # Source: Custom armbian-zram-config file.
+    local source_zram_config="../configs/armbian-zram-config"
     # Destination: Placed in userpatches/overlay to be copied directly to /etc/default/ in the image.
     local dest_zram_config="userpatches/overlay/armbian-zram-config"
 
     # --- FIREFOX DESKTOP OVERLAY ---
-    # Source: Custom firefox.desktop file, located one level up.
-    local source_firefox_desktop="../firefox.desktop"
+    # Source: Custom firefox.desktop file.
+    local source_firefox_desktop="../overlay/firefox.desktop"
     # Destination: Placed in userpatches/overlay to be copied to /usr/share/applications/ in the image.
     local dest_firefox_desktop="userpatches/overlay/firefox.desktop"
 
