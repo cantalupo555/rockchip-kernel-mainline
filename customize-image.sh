@@ -148,9 +148,9 @@ Main() {
             # --- Install Firefox Browser ---
             if [[ ("$RELEASE" == "noble" || "$RELEASE" == "questing") && "$BUILD_DESKTOP" == "yes" ]]; then
                 log_info "Attempting to install Firefox Browser for $RELEASE Desktop..."
-                FIREFOX_URL="https://ftp.mozilla.org/pub/firefox/releases/143.0b1/linux-aarch64/en-US/firefox-143.0b1.tar.xz"
+                FIREFOX_URL="https://ftp.mozilla.org/pub/firefox/releases/147.0b8/linux-aarch64/en-US/firefox-147.0b8.tar.xz"
                 FIREFOX_TAR="/tmp/firefox.tar.xz"
-                
+
                 log_info "Downloading Firefox from $FIREFOX_URL..."
                 if ! wget --no-verbose -O "$FIREFOX_TAR" "$FIREFOX_URL"; then
                     log_error "Failed to download Firefox from $FIREFOX_URL."
