@@ -532,7 +532,13 @@ EOF
         noble | questing)
             log_info "Targeting packages for removal in $RELEASE..."
             # List packages to remove specifically for Ubuntu releases
-            PACKAGES_TO_REMOVE="synaptic xarchiver mc openssh-server"
+            if [ "$BUILD_DESKTOP" = "yes" ]; then
+                # Desktop: remove openssh-server (not needed)
+                PACKAGES_TO_REMOVE="synaptic xarchiver mc openssh-server"
+            else
+                # Server: keep openssh-server (essential for remote access)
+                PACKAGES_TO_REMOVE="synaptic xarchiver mc"
+            fi
             ;;
         *)
             # Default case for other releases not explicitly listed
