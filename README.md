@@ -39,12 +39,21 @@ It utilizes the [official Armbian build framework](https://github.com/armbian/bu
    ./multi_armbian_builder.sh
    ```
 
+   The script provides an **interactive menu** that allows you to:
+
+   1. **Select build type**: Desktop, Server, or Both
+   2. **Select boards** (multi-select): orangepi5, orangepi5-plus, rock-5a, rock-5b, rock-5b-plus
+   3. **Select releases** (multi-select):
+      - Desktop: `noble` (Ubuntu 24.04), `questing` (Ubuntu 25.10)
+      - Server: `noble` (Ubuntu 24.04), `questing` (Ubuntu 25.10), `trixie` (Debian 13)
+   4. **Review configuration** and confirm before building
+
    The script will:
 *   Check for/clone the `build/` directory.
-*   Copy custom configuration (`rockchip-rk3588.conf`), image customization (`customize-image.sh`), and post-processing (`compress-checksum.sh`) scripts into the `build/` directory structure.
-*   Present a menu to choose between building Desktop, Server, or both types of images.
+*   Copy custom configuration files and scripts into the `build/` directory structure.
+*   Present interactive menus to select build options.
 *   Start the selected build loops.
-*   Print logs and the final summary to the console (and log file, if using `tee`).
+*   Print logs and the final summary to the console.
 
 ## Output
 
