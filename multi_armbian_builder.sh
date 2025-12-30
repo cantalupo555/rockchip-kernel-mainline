@@ -4,10 +4,16 @@
 # with different boards, releases, and desktops, followed by server images,
 # optimizing cleanup between builds.
 
-# Define the desired variations
-BOARDS=("orangepi5" "orangepi5-plus" "rock-5a" "rock-5b" "rock-5b-plus")
-RELEASES=("noble" "questing")
+# Available options for selection
+AVAILABLE_BOARDS=("orangepi5" "orangepi5-plus" "rock-5a" "rock-5b" "rock-5b-plus")
+AVAILABLE_RELEASES_DESKTOP=("noble" "questing")
+AVAILABLE_RELEASES_SERVER=("noble" "questing" "trixie")
 DESKTOPS=("gnome") # Only for the desktop section
+
+# Selected options (populated by interactive menus)
+BOARDS=()
+RELEASES=()
+RELEASES_SERVER=()
 
 # Fixed base parameters for all builds (unless overridden)
 BRANCH="mainline"
@@ -38,6 +44,205 @@ FAILED_BUILDS=()
 # --- Helper Functions ---
 log_msg() {
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
+}
+
+# Multi-select menu function
+# Usage: multiselect "prompt" options_array selected_array
+# Returns selected items in the MULTISELECT_RESULT array
+MULTISELECT_RESULT=()
+
+multiselect() {
+    local prompt="$1"
+    shift
+    local -a options=("$@")
+    local -a selected=()
+    local -a checked=()
+    local cur=0
+    local count=${#options[@]}
+
+    # Initialize all as unchecked
+    for ((i=0; i<count; i++)); do
+        checked[i]=0
+    done
+
+    # Hide cursor
+    tput civis
+
+    # Print initial menu
+    echo "$prompt"
+    echo "(Use arrow keys to navigate, SPACE to select, ENTER to confirm)"
+    echo ""
+
+    # Function to print menu
+    print_menu() {
+        for ((i=0; i<count; i++)); do
+            # Move cursor to correct line
+            if ((i == cur)); then
+                echo -n "> "
+            else
+                echo -n "  "
+            fi
+
+            if ((checked[i] == 1)); then
+                echo "[x] ${options[i]}"
+            else
+                echo "[ ] ${options[i]}"
+            fi
+        done
+    }
+
+    print_menu
+
+    # Read user input
+    while true; do
+        # Read single keypress
+        read -rsn1 key
+
+        # Check for escape sequences (arrow keys)
+        if [[ $key == $'\x1b' ]]; then
+            read -rsn2 key
+            case $key in
+                '[A') # Up arrow
+                    ((cur > 0)) && ((cur--))
+                    ;;
+                '[B') # Down arrow
+                    ((cur < count-1)) && ((cur++))
+                    ;;
+            esac
+        elif [[ $key == "" ]]; then # Enter key
+            break
+        elif [[ $key == " " ]]; then # Space key
+            if ((checked[cur] == 1)); then
+                checked[cur]=0
+            else
+                checked[cur]=1
+            fi
+        fi
+
+        # Move cursor up to redraw menu
+        for ((i=0; i<count; i++)); do
+            tput cuu1
+            tput el
+        done
+
+        print_menu
+    done
+
+    # Show cursor
+    tput cnorm
+
+    # Build result array
+    MULTISELECT_RESULT=()
+    for ((i=0; i<count; i++)); do
+        if ((checked[i] == 1)); then
+            MULTISELECT_RESULT+=("${options[i]}")
+        fi
+    done
+
+    echo ""
+}
+
+# Single select menu function
+# Usage: singleselect "prompt" options_array
+# Returns selected item in SINGLESELECT_RESULT
+SINGLESELECT_RESULT=""
+
+singleselect() {
+    local prompt="$1"
+    shift
+    local -a options=("$@")
+    local cur=0
+    local count=${#options[@]}
+
+    # Hide cursor
+    tput civis
+
+    echo "$prompt"
+    echo "(Use arrow keys to navigate, ENTER to select)"
+    echo ""
+
+    # Function to print menu
+    print_menu() {
+        for ((i=0; i<count; i++)); do
+            if ((i == cur)); then
+                echo "> ${options[i]}"
+            else
+                echo "  ${options[i]}"
+            fi
+        done
+    }
+
+    print_menu
+
+    while true; do
+        read -rsn1 key
+
+        if [[ $key == $'\x1b' ]]; then
+            read -rsn2 key
+            case $key in
+                '[A') ((cur > 0)) && ((cur--)) ;;
+                '[B') ((cur < count-1)) && ((cur++)) ;;
+            esac
+        elif [[ $key == "" ]]; then
+            break
+        fi
+
+        for ((i=0; i<count; i++)); do
+            tput cuu1
+            tput el
+        done
+
+        print_menu
+    done
+
+    tput cnorm
+    SINGLESELECT_RESULT="${options[cur]}"
+    echo ""
+}
+
+# Select boards interactively
+select_boards() {
+    log_msg "Select boards to build:"
+    echo ""
+    multiselect "Available boards:" "${AVAILABLE_BOARDS[@]}"
+    BOARDS=("${MULTISELECT_RESULT[@]}")
+
+    if [ ${#BOARDS[@]} -eq 0 ]; then
+        log_msg "### ERROR: No boards selected. Exiting. ###"
+        exit 1
+    fi
+
+    log_msg "Selected boards: ${BOARDS[*]}"
+}
+
+# Select releases for desktop
+select_releases_desktop() {
+    log_msg "Select releases for Desktop builds:"
+    echo ""
+    multiselect "Available releases (Desktop - GNOME):" "${AVAILABLE_RELEASES_DESKTOP[@]}"
+    RELEASES=("${MULTISELECT_RESULT[@]}")
+
+    if [ ${#RELEASES[@]} -eq 0 ]; then
+        log_msg "### ERROR: No releases selected for Desktop. Exiting. ###"
+        exit 1
+    fi
+
+    log_msg "Selected Desktop releases: ${RELEASES[*]}"
+}
+
+# Select releases for server
+select_releases_server() {
+    log_msg "Select releases for Server builds:"
+    echo ""
+    multiselect "Available releases (Server):" "${AVAILABLE_RELEASES_SERVER[@]}"
+    RELEASES_SERVER=("${MULTISELECT_RESULT[@]}")
+
+    if [ ${#RELEASES_SERVER[@]} -eq 0 ]; then
+        log_msg "### ERROR: No releases selected for Server. Exiting. ###"
+        exit 1
+    fi
+
+    log_msg "Selected Server releases: ${RELEASES_SERVER[*]}"
 }
 
 setup_environment() {
@@ -341,14 +546,14 @@ run_server_builds() {
     log_msg "###       Starting Server Builds                  ###"
     log_msg "#####################################################"
     log_msg "Boards: ${BOARDS[*]}"
-    log_msg "Releases: ${RELEASES[*]}"
+    log_msg "Releases: ${RELEASES_SERVER[*]}"
     log_msg "-----------------------------------------------------"
 
     local BUILD_DESKTOP_SERVER="no" # Parameter specific for server builds
     local board release CLEAN_OPT EXIT_CODE build_id
 
     for board in "${BOARDS[@]}"; do
-      for release in "${RELEASES[@]}"; do
+      for release in "${RELEASES_SERVER[@]}"; do
         build_id="Server: ${board}/${release}"
         log_msg "### Starting Build: $build_id ###"
 
@@ -435,51 +640,76 @@ main() {
     ensure_build_dir
     copy_custom_config
 
-    # --- Interactive Menu ---
-    local build_choice
-    log_msg "Select the type of images to build:"
-    options=("Build Desktop images ONLY" "Build Server images ONLY" "Build BOTH Desktop and Server images" "Quit")
-    PS3='Please enter your choice (1-4): ' # Set the select prompt
+    # --- Step 1: Select Build Type ---
+    log_msg "#####################################################"
+    log_msg "###       Armbian Image Builder                    ###"
+    log_msg "#####################################################"
+    echo ""
 
-    select opt in "${options[@]}"
-    do
-        case $opt in
-            "Build Desktop images ONLY")
-                log_msg "--- Option selected: Building Desktop images only ---"
-                build_choice="desktop"
-                break # Exit the select loop
-                ;;
-            "Build Server images ONLY")
-                log_msg "--- Option selected: Building Server images only ---"
-                build_choice="server"
-                # If only server is selected, we need to ensure the cleanup logic
-                # works as if it were the first run (or based on the previous state,
-                # but without a desktop run immediately before).
-                # Resetting FIRST_RUN ensures no unnecessary extra cleaning
-                # assuming there was no prior build in this script execution.
-                # If the script were more complex (e.g., looping the menu), this logic would need to be more robust.
-                FIRST_RUN=true
-                prev_board=""
-                prev_release=""
-                build_choice="server"
-                break # Exit the select loop
-                ;;
-            "Build BOTH Desktop and Server images")
-                log_msg "--- Option selected: Building BOTH Desktop and Server images ---"
-                build_choice="both"
-                break # Exit the select loop
-                ;;
-            "Quit")
-                log_msg "--- Build process cancelled by user. Exiting. ---"
-                exit 0
-                ;;
-            *) # Case for invalid user input
-                log_msg "Invalid option '$REPLY'. Please select a number between 1 and ${#options[@]}."
-                # The select loop will continue automatically
-                ;;
-        esac
-    done
-    # --- End Interactive Menu ---
+    local build_choice
+    singleselect "Select the type of images to build:" \
+        "Build Desktop images ONLY" \
+        "Build Server images ONLY" \
+        "Build BOTH Desktop and Server images" \
+        "Quit"
+
+    case "$SINGLESELECT_RESULT" in
+        "Build Desktop images ONLY")
+            log_msg "--- Option selected: Building Desktop images only ---"
+            build_choice="desktop"
+            ;;
+        "Build Server images ONLY")
+            log_msg "--- Option selected: Building Server images only ---"
+            build_choice="server"
+            FIRST_RUN=true
+            prev_board=""
+            prev_release=""
+            ;;
+        "Build BOTH Desktop and Server images")
+            log_msg "--- Option selected: Building BOTH Desktop and Server images ---"
+            build_choice="both"
+            ;;
+        "Quit")
+            log_msg "--- Build process cancelled by user. Exiting. ---"
+            exit 0
+            ;;
+    esac
+
+    # --- Step 2: Select Boards ---
+    echo ""
+    select_boards
+
+    # --- Step 3: Select Releases ---
+    echo ""
+    if [[ "$build_choice" == "desktop" ]]; then
+        select_releases_desktop
+    elif [[ "$build_choice" == "server" ]]; then
+        select_releases_server
+    elif [[ "$build_choice" == "both" ]]; then
+        select_releases_desktop
+        echo ""
+        select_releases_server
+    fi
+
+    # --- Show Summary Before Building ---
+    echo ""
+    log_msg "#####################################################"
+    log_msg "### Build Configuration Summary                   ###"
+    log_msg "#####################################################"
+    log_msg "Build Type: $build_choice"
+    log_msg "Boards: ${BOARDS[*]}"
+    if [[ "$build_choice" == "desktop" || "$build_choice" == "both" ]]; then
+        log_msg "Desktop Releases: ${RELEASES[*]}"
+    fi
+    if [[ "$build_choice" == "server" || "$build_choice" == "both" ]]; then
+        log_msg "Server Releases: ${RELEASES_SERVER[*]}"
+    fi
+    log_msg "#####################################################"
+    echo ""
+
+    # Confirm before proceeding
+    read -p "Press ENTER to start building or Ctrl+C to cancel..."
+    echo ""
 
     # --- Execute Builds Based on Choice ---
     if [[ "$build_choice" == "desktop" || "$build_choice" == "both" ]]; then
@@ -487,8 +717,6 @@ main() {
     fi
 
     if [[ "$build_choice" == "server" || "$build_choice" == "both" ]]; then
-        # If "server only" was chosen, FIRST_RUN and prev_ vars were already adjusted in the menu.
-        # If "both" was chosen, the prev_ variables will be set by run_desktop_builds.
         run_server_builds
     fi
     # --- End Execute Builds ---
